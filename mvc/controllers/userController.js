@@ -18,7 +18,6 @@ exports.authUser = function (request, response) {
   for (let i = 0; i < Object.keys(users).length; i++) {
     if (users[i]["name"].toLowerCase() == formUser.toLowerCase()) {
       userMatch = true;
-      console.log("match found!");
       // check pass
       if (users[i]["password"] == formPass) {
         // request.cookie('userToken', users[i]['token'], {signed: true});
@@ -29,7 +28,6 @@ exports.authUser = function (request, response) {
           user_token: users[i]["token"],
         });
       } else {
-        console.log("wrong pass");
         response.json({
           status: "false",
           error_message: "Неверный логин или пароль!",
@@ -39,7 +37,6 @@ exports.authUser = function (request, response) {
   }
 
   if (!userMatch) {
-    console.log("match not found!");
     response.send(
       JSON.stringify({
         status: "false",
@@ -48,7 +45,6 @@ exports.authUser = function (request, response) {
     );
   }
 
-  // console.log(users);
 };
 
 exports.addUser = function (request, response) {
@@ -248,10 +244,7 @@ exports.deleteToken = function (req, res) {
     if (user) {
       if (req.body.tokenId != undefined && req.body.tokenId != "") {
         if (user.token.length > 1) {
-          console.log(user.token);
           user.token.splice(req.body.tokenId, 1);
-
-          console.log(user.token);
 
           data = JSON.stringify(users);
           fs.writeFileSync(filePath, data);

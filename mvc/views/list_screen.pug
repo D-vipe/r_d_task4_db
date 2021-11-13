@@ -13,7 +13,7 @@ html(lang="ru")
         link(rel="icon" type="image/png" href="/img/favicon.png")
         script(src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous")
         script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous")
-        script(src="/forms.js" defer type="module")
+        script(src="/main.js" defer type="module")
     body
         div.wrapper
             nav.navbar.navbar-default.navbar-static-top
@@ -81,6 +81,7 @@ html(lang="ru")
                     include ./components/create_user_form.pug
                     include ./components/edit_user_form.pug
                     include ./components/user_token_list.pug
+                    include ./components/custom_alert.pug
 
 
         .footer

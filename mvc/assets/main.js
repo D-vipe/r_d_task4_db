@@ -9,6 +9,11 @@ $(document).ready(function () {
         editUser: $("#editUser"),
       };
 
+      this.alert = {
+        window: $("#customAlert"),
+        message_body: $(".alert-message"),
+      };
+
       this.controls = {
         logout: $("#logoutBtn"),
         createUser: $(".createUser"),
@@ -270,58 +275,65 @@ $(document).ready(function () {
     };
 
     _proto.tokenControlsHandler = function () {
-        const _this = this;
+      const _this = this;
 
-        $(document).on('click', '.token-btn', async function (e) {
-            e.preventDefault();
+      $(document).on("click", ".token-btn", async function (e) {
+        e.preventDefault();
 
-            let opcode = $(this).attr('data-opcode'),
-                userId = $(this).attr('data-userid'),
-                tokenIdx = $(this).attr('data-tokenid');
+        let opcode = $(this).attr("data-opcode"),
+          userId = $(this).attr("data-userid"),
+          tokenIdx = $(this).attr("data-tokenid");
 
-            if (opcode == '107') {
-                // refresh token action
-                let response = await fetch("/users/resetToken", {
-                    method: "POST",
-                    body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
-                    headers: {
-                      "Content-Type": "application/json",
-                      "Accept": "application/json",
-                    },
-                  });
+        if (opcode == "107") {
+          // refresh token action
+          let response = await fetch("/users/resetToken", {
+            method: "POST",
+            body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          });
 
-                  let decodedAnswer = await response.json();
+          let decodedAnswer = await response.json();
 
-                  if (decodedAnswer.status == "true") {
-                    // update rows with tokens
-                    _this.updateTokenList(decodedAnswer.userData);
-                  } else {
-                    console.warn(decodedAnswer.error_message);
-                  }
-            }
+          if (decodedAnswer.status == "true") {
+            // update rows with tokens
+            _this.updateTokenList(decodedAnswer.userData);
+          } else {
+            _this.customAlert(decodedAnswer.error_message);
+          }
+        }
 
-            if (opcode == '109') {
-                // delete token action
-                let response = await fetch("/users/deleteToken", {
-                    method: "POST",
-                    body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
-                    headers: {
-                      "Content-Type": "application/json",
-                      "Accept": "application/json",
-                    },
-                  });
+        if (opcode == "109") {
+          // delete token action
+          let response = await fetch("/users/deleteToken", {
+            method: "POST",
+            body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          });
 
-                  let decodedAnswer = await response.json();
+          let decodedAnswer = await response.json();
 
-                  if (decodedAnswer.status == "true") {
-                    // update token rows
-                    _this.updateTokenList(decodedAnswer.userData);
-                  } else {
-                      alert(decodedAnswer.error_message);
-                  }
-            }
-        });
-    }
+          if (decodedAnswer.status == "true") {
+            // update token rows
+            _this.updateTokenList(decodedAnswer.userData);
+          } else {
+            _this.customAlert(decodedAnswer.error_message);
+          }
+        }
+      });
+    };
+
+    _proto.customAlert = function (message) {
+      const _this = this;
+
+      _this.alert.message_body.empty().text(message);
+      _this.alert.window.modal({ keyboard: false });
+    };
 
     _proto.tableControlsHandler = function () {
       const _this = this;
@@ -353,7 +365,7 @@ $(document).ready(function () {
               _this.showTokenListModal(decodedAnswer.userData);
             }
           } else {
-            console.warn(decodedAnswer.error_message);
+            _this.customAlert(decodedAnswer.error_message);
           }
         } else if (opcode == "103") {
           // delete action
@@ -362,7 +374,7 @@ $(document).ready(function () {
             body: JSON.stringify({ userId: userId }),
             headers: {
               "Content-Type": "application/json",
-              "Accept": "application/json",
+              Accept: "application/json",
             },
           });
 
@@ -372,7 +384,7 @@ $(document).ready(function () {
             // delete row
             _this.userTable.find("tr[data-userid=" + userId + "]").remove();
           } else {
-            console.warn(decodedAnswer.error_message);
+            _this.customAlert(decodedAnswer.error_message);
           }
         }
       });
@@ -414,10 +426,21 @@ $(document).ready(function () {
         Object.keys(userData.token).length > 0
       ) {
         for (let idx = 0; idx < userData.token.length; idx++) {
-          tokenList += '<li><div class="token-line">' + userData.token[idx] + '<div class="token-actions">' +
-          '<button class="token-btn" data-opcode="107" data-userid="'+ userData.id +'" data-tokenid="'+ idx +'"><svg width="20" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="sync" class="svg-inline--fa fa-sync fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"></path></svg></button>' +
-          '<button class="token-btn delete-btn" data-opcode="109" data-userid="'+ userData.id +'" data-tokenid="'+ idx +'"><svg width="20" aria-hidden="true" focusable="false" data-prefix="far" data-icon="trash-alt" class="svg-inline--fa fa-trash-alt fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M268 416h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12zM432 80h-82.41l-34-56.7A48 48 0 0 0 274.41 0H173.59a48 48 0 0 0-41.16 23.3L98.41 80H16A16 16 0 0 0 0 96v16a16 16 0 0 0 16 16h16v336a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128h16a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16zM171.84 50.91A6 6 0 0 1 177 48h94a6 6 0 0 1 5.15 2.91L293.61 80H154.39zM368 464H80V128h288zm-212-48h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12z"></path></svg></button>'
-          '</div></div></li>';
+          tokenList +=
+            '<li><div class="token-line">' +
+            userData.token[idx] +
+            '<div class="token-actions">' +
+            '<button class="token-btn" data-opcode="107" data-userid="' +
+            userData.id +
+            '" data-tokenid="' +
+            idx +
+            '"><svg width="20" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="sync" class="svg-inline--fa fa-sync fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"></path></svg></button>' +
+            '<button class="token-btn delete-btn" data-opcode="109" data-userid="' +
+            userData.id +
+            '" data-tokenid="' +
+            idx +
+            '"><svg width="20" aria-hidden="true" focusable="false" data-prefix="far" data-icon="trash-alt" class="svg-inline--fa fa-trash-alt fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M268 416h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12zM432 80h-82.41l-34-56.7A48 48 0 0 0 274.41 0H173.59a48 48 0 0 0-41.16 23.3L98.41 80H16A16 16 0 0 0 0 96v16a16 16 0 0 0 16 16h16v336a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128h16a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16zM171.84 50.91A6 6 0 0 1 177 48h94a6 6 0 0 1 5.15 2.91L293.61 80H154.39zM368 464H80V128h288zm-212-48h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12z"></path></svg></button>';
+          ("</div></div></li>");
         }
       }
 
@@ -451,10 +474,10 @@ $(document).ready(function () {
             // add new row to list
             _this.updateTokenList(decodedAnswer.userData);
           } else {
-            console.warn(decodedAnswer.error_message);
+            _this.customAlert(decodedAnswer.error_message);
           }
         } else {
-          console.warn("Не хватает параметров");
+          _this.customAlert("Не хватает параметров");
         }
       });
     };
@@ -464,12 +487,26 @@ $(document).ready(function () {
 
       let tokenList = "";
       $("#userTokenList").find("ul.token-list").empty();
-      if (typeof userData.token == "object" && Object.keys(userData.token).length > 0) {
+      if (
+        typeof userData.token == "object" &&
+        Object.keys(userData.token).length > 0
+      ) {
         for (let idx = 0; idx < userData.token.length; idx++) {
-          tokenList += '<li><div class="token-line">' + userData.token[idx] + '<div class="token-actions">' +
-          '<button class="token-btn" data-opcode="107" data-userid="'+ userData.id +'" data-tokenid="'+ idx +'"><svg width="20" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="sync" class="svg-inline--fa fa-sync fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"></path></svg></button>' +
-          '<button class="token-btn delete-btn" data-opcode="109" data-userid="'+ userData.id +'" data-tokenid="'+ idx +'"><svg width="20" aria-hidden="true" focusable="false" data-prefix="far" data-icon="trash-alt" class="svg-inline--fa fa-trash-alt fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M268 416h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12zM432 80h-82.41l-34-56.7A48 48 0 0 0 274.41 0H173.59a48 48 0 0 0-41.16 23.3L98.41 80H16A16 16 0 0 0 0 96v16a16 16 0 0 0 16 16h16v336a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128h16a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16zM171.84 50.91A6 6 0 0 1 177 48h94a6 6 0 0 1 5.15 2.91L293.61 80H154.39zM368 464H80V128h288zm-212-48h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12z"></path></svg></button>'
-          '</div></div></li>';
+          tokenList +=
+            '<li><div class="token-line">' +
+            userData.token[idx] +
+            '<div class="token-actions">' +
+            '<button class="token-btn" data-opcode="107" data-userid="' +
+            userData.id +
+            '" data-tokenid="' +
+            idx +
+            '"><svg width="20" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="sync" class="svg-inline--fa fa-sync fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"></path></svg></button>' +
+            '<button class="token-btn delete-btn" data-opcode="109" data-userid="' +
+            userData.id +
+            '" data-tokenid="' +
+            idx +
+            '"><svg width="20" aria-hidden="true" focusable="false" data-prefix="far" data-icon="trash-alt" class="svg-inline--fa fa-trash-alt fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M268 416h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12zM432 80h-82.41l-34-56.7A48 48 0 0 0 274.41 0H173.59a48 48 0 0 0-41.16 23.3L98.41 80H16A16 16 0 0 0 0 96v16a16 16 0 0 0 16 16h16v336a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128h16a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16zM171.84 50.91A6 6 0 0 1 177 48h94a6 6 0 0 1 5.15 2.91L293.61 80H154.39zM368 464H80V128h288zm-212-48h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12z"></path></svg></button>';
+          ("</div></div></li>");
         }
       }
 

@@ -1,0 +1,13 @@
+div.modal.fade#customAlert(tabindex="-1" role="dialog")
+    div.modal-dialog(role="document")
+        .modal-content
+            .modal-header
+                h5.modal-title Внимание!
+                button.close(type="button" data-dismiss="modal" aria-label="Close")
+                    span(aria-hidden="true") &times;
+
+            .modal-body
+                p.alert-message
+
+            .modal-footer
+                button.btn.btn-primary(type="button" data-dismiss="modal") ок

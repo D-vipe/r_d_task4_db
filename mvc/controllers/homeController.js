@@ -5,9 +5,6 @@ const filePath = path.resolve(__dirname + "/../public/users.json");
 
 exports.index = function (request, response) {
   // check if we have user relative cookie
-  console.log({
-      'cookie': request.cookies
-  });
 
   if (!checkUserAuth(request.cookies)) {
     response.render("main_screen", {
@@ -31,10 +28,6 @@ exports.about = function (request, response) {
 
 function checkUserAuth(cookie) {
   let userToken = cookie.userToken ?? "";
-
-  console.log({
-    userToken: userToken
-  });
 
   //TODO add check if token is present in the list
 
