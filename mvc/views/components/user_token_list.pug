@@ -1,0 +1,13 @@
+div.modal.fade#userTokenList(tabindex="-1" role="dialog")
+    div.modal-dialog(role="document")
+        .modal-content
+            .modal-header
+                h5.modal-title
+                button.close(type="button" data-dismiss="modal" aria-label="Close")
+                    span(aria-hidden="true") &times;
+
+            .modal-body
+                ul.token-list
+
+            .modal-footer
+                button#generateToken.btn.btn-primary(type="button") Сгенерировать

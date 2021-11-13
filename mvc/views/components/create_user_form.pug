@@ -1,0 +1,22 @@
+div.modal.fade#newUserForm(tabindex="-1" role="dialog")
+    div.modal-dialog(role="document")
+        .modal-content
+            .modal-header
+                h5.modal-title Создать нового пользователя
+                button.close(type="button" data-dismiss="modal" aria-label="Close")
+                    span(aria-hidden="true") &times;
+
+            .modal-body
+                form(id="createUser" autocomplete="off")
+                    .form-group
+                        label(for="newUserName") Имя Пользователи
+                        input(type="text" name="name" class="form-control" id="newUserName" required="true" autocomplete="off")
+                    .form-group
+                        label(for="newUserPass") Пароль
+                        input(type="password" name="pass" class="form-control" id="newUserPass" required="true" autocomplete="off")
+                    .form-group
+                        label(for="newUserAge") Возраст
+                        input(type="number" min="0" max="99" step="1" name="age" class="form-control" id="newUserAge" required="true" autocomplete="off")
+                        small.formError.form-text.text-danger
+
+                    button.btn.btn-primary(type="submit") Добавить

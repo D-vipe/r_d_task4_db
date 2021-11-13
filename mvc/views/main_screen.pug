@@ -1,0 +1,75 @@
+doctype html
+html(lang="ru")
+    head
+        meta(charset="UTF-8")
+        meta(http-equiv="X-UA-Compatible" content="IE=edge")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        title Админка Express.js
+
+        link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'
+        integrity='sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u' crossorigin='anonymous')
+        link(rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css')
+        link(rel='stylesheet' href='/main.css' type='text/css')
+        link(rel="icon" type="image/png" href="/img/favicon.png")
+        script(src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous")
+        script(src="/forms.js" defer type="module")
+    body
+        div.wrapper
+            nav.navbar.navbar-default.navbar-static-top
+                .container
+                    .navbar-header
+                        button.navbar-toggle.collapsed(type='button' data-toggle='collapse' data-target='#navbar' aria-expanded='false' aria-controls='navbar')
+                            span.sr-only Раскрыть
+                            span.icon-bar
+                            span.icon-bar
+                            span.icon-bar
+                        a.navbar-brand(href='/') Административная панель
+                    #navbar.navbar-collapse.collapse
+                        ul.nav.navbar-nav
+                            li(class=(title == 'Home') ? 'active' : null)
+                                a(href='/') Главная
+                            li(class=(title == 'About') ? 'active' : null)
+                                a(href='/users') Пользователи
+                        ul.nav.navbar-nav.navbar-right
+                            if user
+                                li.dropdown
+                                    a.navbar-avatar.dropdown-toggle(href='#' data-toggle='dropdown')
+                                        span #{user.name || user.email} &nbsp;
+                                        i.caret
+                                    ul.dropdown-menu
+                                        li
+                                            a(href='/profile') Profile
+                                        li.divider(role='separator')
+                                        li
+                                            a(href='/logout') Logout
+                            else
+                                li(class=(title == 'Auth') ? 'active' : null)
+                                    a(href='/login') Авторизация
+                                //- li(class=(title == 'Register') ? 'active' : null)
+                                //-     a(href='/register') Регистрация
+
+            .container
+                section.d-flex.align-items-center
+
+                    .form-wrapper
+                        p Для продолжения работы необходимо авторизоваться
+
+                        form(id="authForm")
+                            .form-group
+                                label(for="userNameField") Имя Пользователи
+                                input(type="text" name="userName" class="form-control" id="userNameField" required="true")
+                                small#emailHelp.form-text.text-muted Информация передается конфиденциально
+                            .form-group
+                                label(for="userPassField") Пароль
+                                input(type="password" name="userPass" class="form-control" id="userPassField" required="true")
+                                small.formError.form-text.text-danger
+
+                            button.btn.btn-primary(type="submit") Отправить
+
+        .footer
+            .container
+                .footer-body
+                    .left-footer
+                        p © Robot Dreams
+                    .right-footer
+                        p 2021
