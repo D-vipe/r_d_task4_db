@@ -1,63 +1,58 @@
 const fs = require("fs");
 const path = require('path');
+const models = require("../../database/models");
 
 const filePath = path.resolve(__dirname + "/../public/users.json");
 
-exports.index = function (request, response) {
+exports.index = function (req, res) {
   // check if we have user relative cookie
 
-  if (!checkUserAuth(request.cookies)) {
-    response.render("main_screen", {
+  checkUserAuth(req).then(async (result) => {
+    console.log({auth_res: result});
+    if ( result == false ) {
+      res.render("main_screen", {
         title: "Auth",
         text1: "test text",
       });
-  } else {
-    let userData = getUserDataByToken(request.cookies.userToken)
-
-    response.render("list_screen", {
-      title: "Main",
-      user: userData,
-      usersList: getUsersList()
-    });
-  }
-};
-
-exports.about = function (request, response) {
-  response.send("О сайте");
-};
-
-function checkUserAuth(cookie) {
-  let userToken = cookie.userToken ?? "";
-
-  //TODO add check if token is present in the list
-
-  return userToken != "";
-}
-
-function getUserDataByToken(userToken) {
-    // read user data
-    const content = fs.readFileSync(filePath,"utf8");
-    const users = JSON.parse(content);
-
-    let userData = {};
-
-    for (let i = 0; i < Object.keys(users).length; i++) {
-        if (users[i]['token'].indexOf(userToken) != -1) {
-            userData = {
-                'name': users[i]['name'],
-                'age': users[i]['age'],
-                'id': users[i]['id'],
-                'token': users[i]['token']
-            }
-        }
+    } else {
+      let userList = await models.User.findAll();
+      res.render("list_screen", {
+        title: "Main",
+        user: req.session.user,
+        usersList: userList
+      });
     }
+  });
 
-    return userData;
-}
+  // if (!checkUserAuth(req)) {
 
-function getUsersList() {
-    const content = fs.readFileSync(filePath,"utf8");
-    const users = JSON.parse(content);
+  // } else {
 
-    return users;
+
+
+  // }
+};
+
+exports.about = function (req, res) {
+  res.send("О сайте");
+};
+
+async function checkUserAuth(req) {
+  // Check session first if no user session, check cookie and set session user
+  let session_user = req.session.user;
+
+  console.log({session_user: session_user === undefined, request_cookie: req.cookies.userId == undefined});
+
+  if (session_user === undefined) {
+
+    if (req.cookies.userId === undefined) {
+      return false;
+    } else {
+      let userData = await models.User.findOne({ where: { id: parseInt(req.cookies.userId) } });
+      req.session.user = {id: userData.id, is_admin: userData.isAdmin, name: userData.name};
+      return true;
+    }
+  } else {
+    return true;
+  }
 }

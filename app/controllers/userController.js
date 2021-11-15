@@ -1,53 +1,44 @@
 const { response } = require("express");
 const fs = require("fs");
-const models = require('../../database/models');
+const models = require("../../database/models");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
-const md5 = require('md5');
+const md5 = require("md5");
+const validator = require("email-validator");
 
 const filePath = path.resolve(__dirname + "/../public/users.json");
 
-exports.authUser = async function (request, response) {
-  let formUser = request.body.userEmail ?? "",
-    formPass = request.body.userPass ?? "";
+exports.authUser = async function (req, res) {
+  let formUser = req.body.userEmail ?? "",
+    formPass = req.body.userPass ?? "";
 
-  // Search the user by email field
-  const userData = await models.User.findOne({where: {email: ':email'}}, {email: formUser});
+  // validate email
+  if (!validator.validate(formUser)) {
+    res
+      .status(400)
+      .json({ status: "false", error_message: "Неверный формат email" });
+  } else {
+    const userData = await models.User.findOne({ where: { email: formUser } });
 
-  console.log({user_data: userData});
+    if (userData === null) {
+      res
+        .status(404)
+        .json({status: "false", error_message: "Пользователь не найден"});
+    } else {
+      // compare user password
+      console.log({ user_data: userData });
 
-  // check if there is a user with the same name and check pass
-  let userMatch = false;
-  // for (let i = 0; i < Object.keys(users).length; i++) {
-  //   if (users[i]["name"].toLowerCase() == formUser.toLowerCase()) {
-  //     userMatch = true;
-  //     // check pass
-  //     if (users[i]["password"] == formPass) {
-  //       // request.cookie('userToken', users[i]['token'], {signed: true});
+      if (md5(md5(formPass)) !== userData.password) {
+        res
+          .status(200)
+          .json({status: "false", error_message: "Неверный пароль"});
+      } else {
+        req.session.user = {id: userData.id, is_admin: userData.isAdmin, name: userData.name};
 
-  //       response.json({
-  //         status: "true",
-  //         success_message: "",
-  //         user_token: users[i]["token"],
-  //       });
-  //     } else {
-  //       response.json({
-  //         status: "false",
-  //         error_message: "Неверный логин или пароль!",
-  //       });
-  //     }
-  //   }
-  // }
-
-  if (!userMatch) {
-    response.send(
-      JSON.stringify({
-        status: "false",
-        error_message: "Такого пользователя не существует!",
-      })
-    );
+        res.status(200).json({status: "true", user_id: userData.id});
+      }
+    }
   }
-
 };
 
 exports.addUser = function (request, response) {
@@ -293,7 +284,6 @@ exports.deleteById = function (req, res) {
       fs.writeFileSync(filePath, data);
 
       res.json({ status: "true" });
-
     } else {
       res.json({
         status: "false",
