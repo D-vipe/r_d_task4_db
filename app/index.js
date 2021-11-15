@@ -16,6 +16,10 @@ app.set("view engine", "pug");
 const userRouter = require("./routers/userRouter");
 const homeRouter = require("./routers/homeRouter");
 
+console.log({
+  'cookieParser': cookieParser.JSONCookie('userId')
+});
+
 app.use(
   session({
     secret: uuidv4(),

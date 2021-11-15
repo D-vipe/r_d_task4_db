@@ -70,7 +70,7 @@ $(document).ready(function () {
 
         if ($(this).get(0).reportValidity()) {
           let formData = {
-            userName: $(this).find("input[name=userName]").val(),
+            userEmail: $(this).find("input[name=userEmail]").val(),
             userPass: $(this).find("input[name=userPass]").val(),
           };
 
@@ -79,7 +79,7 @@ $(document).ready(function () {
             body: JSON.stringify(formData),
             headers: {
               "Content-Type": "application/json",
-              Accept: "application/json",
+              "Accept": "application/json",
             },
           });
 
@@ -95,17 +95,20 @@ $(document).ready(function () {
               );
           } else {
             if (
-              decodedAnswer.user_token != undefined &&
-              decodedAnswer.user_token.length > 0
+              decodedAnswer.user_id != undefined
             ) {
               document.cookie =
-                "userToken=" + decodedAnswer.user_token[0] + "; max-age=36000";
+                "userId=" + decodedAnswer.user_id + "; max-age=36000";
+                location.href = "/";
             } else {
-              // temporary decision
-              document.cookie = "userToken=temporaryUserToken; max-age=36000";
+              _this.forms.authForm
+              .find(".formError")
+              .empty()
+              .text(
+                decodedAnswer.error_message ??
+                  "Произошла ошибка, попробуйте позже."
+              );ß
             }
-
-            location.href = "/";
           }
         }
 

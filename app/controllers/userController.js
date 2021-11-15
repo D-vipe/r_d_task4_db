@@ -1,40 +1,43 @@
 const { response } = require("express");
 const fs = require("fs");
+const models = require('../../database/models');
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
+const md5 = require('md5');
 
 const filePath = path.resolve(__dirname + "/../public/users.json");
 
-exports.authUser = function (request, response) {
-  // read user data
-  const content = fs.readFileSync(filePath, "utf8");
-  const users = JSON.parse(content);
-
-  let formUser = request.body.userName ?? "",
+exports.authUser = async function (request, response) {
+  let formUser = request.body.userEmail ?? "",
     formPass = request.body.userPass ?? "";
+
+  // Search the user by email field
+  const userData = await models.User.findOne({where: {email: ':email'}}, {email: formUser});
+
+  console.log({user_data: userData});
 
   // check if there is a user with the same name and check pass
   let userMatch = false;
-  for (let i = 0; i < Object.keys(users).length; i++) {
-    if (users[i]["name"].toLowerCase() == formUser.toLowerCase()) {
-      userMatch = true;
-      // check pass
-      if (users[i]["password"] == formPass) {
-        // request.cookie('userToken', users[i]['token'], {signed: true});
+  // for (let i = 0; i < Object.keys(users).length; i++) {
+  //   if (users[i]["name"].toLowerCase() == formUser.toLowerCase()) {
+  //     userMatch = true;
+  //     // check pass
+  //     if (users[i]["password"] == formPass) {
+  //       // request.cookie('userToken', users[i]['token'], {signed: true});
 
-        response.json({
-          status: "true",
-          success_message: "",
-          user_token: users[i]["token"],
-        });
-      } else {
-        response.json({
-          status: "false",
-          error_message: "Неверный логин или пароль!",
-        });
-      }
-    }
-  }
+  //       response.json({
+  //         status: "true",
+  //         success_message: "",
+  //         user_token: users[i]["token"],
+  //       });
+  //     } else {
+  //       response.json({
+  //         status: "false",
+  //         error_message: "Неверный логин или пароль!",
+  //       });
+  //     }
+  //   }
+  // }
 
   if (!userMatch) {
     response.send(
