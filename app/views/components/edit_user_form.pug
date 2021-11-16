@@ -10,14 +10,17 @@ div.modal.fade#editUserForm(tabindex="-1" role="dialog")
                 form(id="editUser" autocomplete="off")
                     input(type="hidden" name="userid")
                     .form-group
-                        label(for="userName") Имя Пользователи
-                        input(type="text" name="name" class="form-control" id="usserName" required="true" autocomplete="off")
+                        label(for="userName") Имя Пользователя
+                        input(type="text" name="name" class="form-control" id="userName" required="true" autocomplete="off")
+                    .form-group
+                        label(for="userEmail") Email Пользователя
+                        input(type="email" name="email" class="form-control" id="userEmail" required="true" autocomplete="off")
                     .form-group
                         label(for="userPass") Пароль
                         input(type="password" name="pass" class="form-control" id="userPass" required="true" autocomplete="off")
                     .form-group
                         label(for="userAge") Возраст
-                        input(type="number" min="0" max="99" step="1" name="age" class="form-control" id="userAge" required="true" autocomplete="off")
+                        input(type="number" min="0" max="99" step="1" name="age" class="form-control" id="userAge" autocomplete="off")
                         small.formError.form-text.text-danger
 
                     button.btn.btn-primary(type="submit") Редактировать

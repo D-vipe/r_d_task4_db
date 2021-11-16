@@ -16,14 +16,22 @@ exports.authUser = async function (req, res) {
   if (!validator.validate(formUser)) {
     res
       .status(400)
-      .json({ status: "false", error_message: "Неверный формат email" });
+      .json({ status: false, error_message: "Неверный формат email" });
   } else {
-    const userData = await models.User.findOne({ where: { email: formUser } });
+    const userData = await models.User.findOne({
+      include: [
+        {
+          model: models.Token,
+          as: "token",
+        },
+      ],
+      where: { email: formUser },
+    });
 
     if (userData === null) {
       res
         .status(404)
-        .json({status: "false", error_message: "Пользователь не найден"});
+        .json({ status: false, error_message: "Пользователь не найден" });
     } else {
       // compare user password
       console.log({ user_data: userData });
@@ -31,291 +39,288 @@ exports.authUser = async function (req, res) {
       if (md5(md5(formPass)) !== userData.password) {
         res
           .status(200)
-          .json({status: "false", error_message: "Неверный пароль"});
+          .json({ status: false, error_message: "Неверный пароль" });
       } else {
-        req.session.user = {id: userData.id, is_admin: userData.isAdmin, name: userData.name};
+        req.session.user = {
+          id: userData.id,
+          is_admin: userData.isAdmin,
+          name: userData.name,
+        };
 
-        res.status(200).json({status: "true", user_id: userData.id});
+        res.status(200).json({ status: true, user_id: userData.id });
       }
     }
   }
 };
 
-exports.addUser = function (request, response) {
-  // read user data
-  const content = fs.readFileSync(filePath, "utf8");
-  const users = JSON.parse(content);
-
-  // находим максимальный id
-  const lastId = Math.max.apply(
-    Math,
-    users.map(function (o) {
-      return o.id;
-    })
-  );
-
-  // Проверим нет ли пользоателя с таким же именем (не регистрозависимо)
-  for (let i = 0; i < Object.keys(users).length; i++) {
-    if (request.body.userName == users[i]["name"]) {
-      response.json({
-        status: "false",
-        success_message: "Пользователь с таким именем уже существует!",
-        user_data: newUser,
-      });
-      break;
-    }
-  }
-
-  if (request.body.userName != "" && request.body.userPass != "") {
-    let newUser = {
-      id: lastId + 1,
-      name: request.body.userName,
-      password: request.body.userPass,
-      age: request.body.userAge ?? "",
-      token: [uuidv4()],
-    };
-
-    users.push(newUser);
-    data = JSON.stringify(users);
-    // перезаписываем файл с новыми данными
-    fs.writeFileSync(filePath, data);
-
-    response.json({
-      status: "true",
-      success_message: "Пользователь успешно добавлен",
-      user_data: newUser,
+exports.addUser = async function (req, res) {
+  // validate email
+  if (!validator.validate(req.body.userEmail)) {
+    res
+      .status(400)
+      .json({ status: false, error_message: "Неверный формат email" });
+  } else {
+    let existingUser = await models.User.findOne({
+      include: [
+        {
+          model: models.Token,
+          as: "token",
+        },
+      ],
+      where: { email: req.body.userEmail },
     });
+
+    if (existingUser === null) {
+      const newUser = await models.User.create({
+        name: req.body.userName,
+        email: req.body.userEmail,
+        password: md5(md5(req.body.userPass)),
+        isAdmin: false,
+      });
+
+      if (newUser !== false && newUser !== null && newUser !== undefined) {
+        res.status(200).json({ status: true, user_data: newUser });
+      } else {
+        res.status(400).json({
+          status: false,
+          error_message:
+            "Что-то пошло не так, не удалось добавить пользователя",
+        });
+      }
+    } else {
+      res.status(200).json({
+        status: false,
+        error_message: "Пользователь с таким email уже существует",
+      });
+    }
+  }
+};
+
+exports.getById = async function (req, res) {
+  if (
+    req.body.userId != undefined &&
+    req.body.userId != null &&
+    req.body.userId != ""
+  ) {
+    const user = await models.User.findOne({
+      include: [
+        {
+          model: models.Token,
+          as: "token",
+        },
+      ],
+      where: { id: req.body.userId },
+    });
+
+    if (user !== null) {
+      res.status(200).json({ status: true, userData: user });
+    } else {
+      res.status(200).json({
+        status: false,
+        error_message: "Не удалось найти пользователя",
+      });
+    }
   } else {
-    response.json({
-      status: "false",
-      success_message: "Форма заполнена некорректно",
-      user_data: newUser,
+    res.status(400).json({
+      status: false,
+      error_message: "Ошибка. Не достаточно параметров",
     });
   }
-
-  // response.send("Добавление пользователя");
-};
-// exports.getUsers = function (request, response) {
-//   response.send("Список пользователей");
-// };
-
-exports.getById = function (req, res) {
-  // read user data
-  const content = fs.readFileSync(filePath, "utf8");
-  const users = JSON.parse(content);
-
-  let userData = {};
-
-  if (req.body.userId != undefined && req.body.userId != "") {
-    for (let i = 0; i < Object.keys(users).length; i++) {
-      if (req.body.userId == users[i].id.toString()) {
-        userData = users[i];
-        break;
-      }
-    }
-
-    if (userData.id != undefined && userData.id != "") {
-      res.json({ status: "true", userData: userData });
-    } else {
-      res.json({ status: "false", error_message: "Пользователь не найден" });
-    }
-  } else {
-    res.json({ status: "false", error_message: "Не указан id пользователя" });
-  }
 };
 
-exports.update = function (req, res) {
-  // read user data
-  const content = fs.readFileSync(filePath, "utf8");
-  const users = JSON.parse(content);
+exports.update = async function (req, res) {
+  // validate email
+  if (validator.validate(req.body.userEmail)) {
+    const updatedUser = await models.User.update(
+      {
+        name: req.body.userName,
+        email: req.body.userEmail,
+        password: req.body.userPass,
+        age: req.body.userAge,
+      },
+      { where: { id: req.body.userId }, returning: true, plain: true }
+    );
 
-  if (req.body.userId != undefined && req.body.userId != "") {
-    let user;
-    for (let i = 0; i < Object.keys(users).length; i++) {
-      if (req.body.userId == users[i].id.toString()) {
-        user = users[i];
-        break;
-      }
-    }
-
-    if (user) {
-      user.age = req.body.userAge;
-      user.name = req.body.userName;
-      user.password = req.body.userPass;
-      data = JSON.stringify(users);
-      fs.writeFileSync(filePath, data);
-
-      res.json({ status: "true", userData: user });
+    if (updatedUser) {
+      res.status(200).json({ status: true, userData: updatedUser[1] });
     } else {
-      res.json({
-        status: "false",
-        error_message: "Не удалось обновить пользователя!",
+      res.status(400).json({
+        status: false,
+        error_message: "Не удалось обновить пользователя",
       });
     }
   } else {
-    res.json({ status: "false", error_message: "Не указан id пользователя!" });
+    res
+      .status(400)
+      .json({ status: false, error_message: "Неверный формат email" });
   }
 };
 
-exports.generateToken = function (req, res) {
-  // read user data
-  const content = fs.readFileSync(filePath, "utf8");
-  const users = JSON.parse(content);
-
-  if (req.body.userId != undefined && req.body.userId != "") {
-    let user;
-    for (let i = 0; i < Object.keys(users).length; i++) {
-      if (req.body.userId == users[i].id.toString()) {
-        user = users[i];
-        break;
-      }
-    }
+exports.generateToken = async function (req, res) {
+  if (
+    req.body.userId != undefined &&
+    req.body.userId != null &&
+    req.body.userId != ""
+  ) {
+    const user = await models.User.findOne({
+      include: [
+        {
+          model: models.Token,
+          as: "token",
+        },
+      ],
+      where: { id: req.body.userId },
+    });
 
     if (user) {
-      user.token.push(uuidv4());
-      data = JSON.stringify(users);
-      fs.writeFileSync(filePath, data);
-
-      res.json({ status: "true", userData: user });
-    } else {
-      res.json({
-        status: "false",
-        error_message: "Не удалось добавить токен!",
+      // generate new token
+      const newToken = await models.Token.create({
+        token: uuidv4(),
+        userId: user.id,
       });
-    }
-  } else {
-    res.json({ status: "false", error_message: "Не указан id пользователя!" });
-  }
-};
 
-exports.resetToken = function (req, res) {
-  // read user data
-  const content = fs.readFileSync(filePath, "utf8");
-  const users = JSON.parse(content);
-
-  if (req.body.userId != undefined && req.body.userId != "") {
-    let user;
-    for (let i = 0; i < Object.keys(users).length; i++) {
-      if (req.body.userId == users[i].id.toString()) {
-        user = users[i];
-        break;
-      }
-    }
-
-    if (user) {
-      if (req.body.tokenId != undefined && req.body.tokenId != "") {
-        user.token[req.body.tokenId] = uuidv4();
-      }
-      data = JSON.stringify(users);
-      fs.writeFileSync(filePath, data);
-
-      res.json({ status: "true", userData: user });
-    } else {
-      res.json({
-        status: "false",
-        error_message: "Не удалось выполнить операцию",
-      });
-    }
-  } else {
-    res.json({ status: "false", error_message: "Не указан id пользователя!" });
-  }
-};
-
-exports.deleteToken = function (req, res) {
-  // read user data
-  const content = fs.readFileSync(filePath, "utf8");
-  const users = JSON.parse(content);
-
-  if (req.body.userId != undefined && req.body.userId != "") {
-    let user;
-    for (let i = 0; i < Object.keys(users).length; i++) {
-      if (req.body.userId == users[i].id.toString()) {
-        user = users[i];
-        break;
-      }
-    }
-
-    if (user) {
-      if (req.body.tokenId != undefined && req.body.tokenId != "") {
-        if (user.token.length > 1) {
-          user.token.splice(req.body.tokenId, 1);
-
-          data = JSON.stringify(users);
-          fs.writeFileSync(filePath, data);
+      if (newToken) {
+        const userData = await models.User.findOne({
+          include: [
+            {
+              model: models.Token,
+              as: "token",
+            },
+          ],
+          where: { id: req.body.userId },
+        });
+        if (userData) {
+          res.status(200).json({ status: true, userData: userData });
         } else {
-          res.json({
-            status: "false",
-            error_message: "Невозможно удалить единственный токен.",
-          });
+          await models.Token.destroy({ where: { userId: req.body.userId } });
+          res
+            .status(200)
+            .json({
+              status: false,
+              error_message:
+                "Пользователя не существует. Перезагрузите страницу",
+            });
         }
+      } else {
+        res.status(200).json({
+          status: false,
+          error_message: "Не удалось сгенерировать токен",
+        });
       }
-
-      res.json({ status: "true", userData: user });
     } else {
-      res.json({
-        status: "false",
-        error_message: "Не удалось выполнить операцию",
+      res.status(200).json({
+        status: false,
+        error_message: "Не удалось найти пользователя",
       });
     }
   } else {
-    res.json({ status: "false", error_message: "Не указан id пользователя!" });
+    res.status(400).json({
+      status: false,
+      error_message: "Ошибка. Не достаточно параметров",
+    });
   }
 };
 
-exports.deleteById = function (req, res) {
-  // check if user is admin
-  let authData = getUserDataByToken(req.cookies.userToken);
+exports.resetToken = async function (req, res) {
+  if (req.body.userId && req.body.tokenId) {
+    // update necessary token
+    const updatedToken = await models.Token.update(
+      {
+        token: uuidv4(),
+      },
+      { where: { id: req.body.tokenId }, returning: true, plain: true }
+    );
 
-  if (authData.name == "Admin") {
-    // read user data
-    const content = fs.readFileSync(filePath, "utf8");
-    const users = JSON.parse(content);
-
-    if (req.body.userId != undefined && req.body.userId != "") {
-      let user;
-      for (let i = 0; i < Object.keys(users).length; i++) {
-        if (req.body.userId == users[i].id.toString()) {
-          users.splice(i, 1);
-          break;
-        }
-      }
-
-      data = JSON.stringify(users);
-      fs.writeFileSync(filePath, data);
-
-      res.json({ status: "true" });
-    } else {
-      res.json({
-        status: "false",
-        error_message: "Не указан id пользователя!",
+    if (updatedToken) {
+      const user = await models.User.findOne({
+        include: [
+          {
+            model: models.Token,
+            as: "token",
+            order: ['id', 'ASC']
+          },
+        ],
+        where: { id: req.body.userId },
       });
+
+      if (user) {
+        res.status(200).json({ status: true, userData: user });
+      } else {
+        // delete all tokens of the deleted user
+        await models.Token.destroy({ where: { userId: req.body.userId } });
+
+        res
+          .status(200)
+          .json({ status: false, error_message: "Пользователь не найден. Вероятно он был удален ранее. Все токены данного пользователя удалены автоматически" });
+      }
+    } else {
+      res
+        .status(200)
+        .json({ status: false, error_message: "Не удалось обновить токен" });
     }
   } else {
-    res.json({
-      status: "false",
+    res.status(400).json({
+      status: false,
+      error_message: "Ошибка. Не достаточно параметров",
+    });
+  }
+};
+
+exports.deleteToken = async function (req, res) {
+  if (req.body.userId && req.body.tokenId) {
+    const deletedToken = await models.Token.destroy({
+      where: { id: req.body.tokenId },
+    });
+
+    console.log({ deleted_token: deletedToken });
+
+    const updatedUser = await models.User.findOne({
+      include: [
+        {
+          model: models.Token,
+          as: "token",
+        },
+      ],
+      where: { id: req.body.userId },
+    });
+
+    if (updatedUser) {
+      res.status(200).json({ status: true, userData: updatedUser });
+    } else {
+      // user might have been deleted by another person
+      // delete all the rest tokens in this case
+      await models.Token.destroy({ where: { userId: req.body.userId } });
+      res.status(200).json({ status: false, error_message: 'Пользователь был удален ранее, все токены данного пользователя автоматически удалены. Перезагрузите страницу' });
+    }
+  } else {
+    res
+      .status(400)
+      .json({ status: false, error_message: "Ошибка. Не хватает параметров" });
+  }
+};
+
+exports.deleteById = async function (req, res) {
+  // check if user is admin
+  if (req.session.user.is_admin) {
+    if (req.body.userId) {
+      const deletedUser = await models.User.destroy({
+        where: {
+          id: req.body.userId,
+        },
+      });
+      console.log({ action: "delete user", result: deletedUser });
+
+      res.status(200).json({ status: true });
+    } else {
+      res
+        .status(400)
+        .json({ status: false, error_message: "Не указан id пользователя" });
+    }
+  } else {
+    res.status(200).json({
+      status: false,
       error_message:
         "Только пользователь с админ.правами может удалять других пользователей",
     });
   }
 };
-
-function getUserDataByToken(userToken) {
-  // read user data
-  const content = fs.readFileSync(filePath, "utf8");
-  const users = JSON.parse(content);
-
-  let userData = {};
-
-  for (let i = 0; i < Object.keys(users).length; i++) {
-    if (users[i]["token"].indexOf(userToken) != -1) {
-      userData = {
-        name: users[i]["name"],
-        age: users[i]["age"],
-        id: users[i]["id"],
-        token: users[i]["token"],
-      };
-    }
-  }
-
-  return userData;
-}

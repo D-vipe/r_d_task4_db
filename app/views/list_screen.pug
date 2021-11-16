@@ -60,6 +60,7 @@ html(lang="ru")
                                 tr
                                     th(scope="col") #
                                     th(scope="col") Имя
+                                    th(scope="col") Email
                                     th(scope="col") Возраст
                                     th.actionTh(scope="col") Действия
                             tbody
@@ -67,6 +68,7 @@ html(lang="ru")
                                     tr(data-userid= userItem['id'])
                                         th(scope="row")= userItem['id']
                                         td.userNameTd= userItem['name']
+                                        td.userEmailTd= userItem['email']
                                         td.userAgeTd= userItem['age']
                                         td
                                             .actions-wrapper
@@ -82,7 +84,7 @@ html(lang="ru")
                     include ./components/edit_user_form.pug
                     include ./components/user_token_list.pug
                     include ./components/custom_alert.pug
-
+                    include ./components/custom_confirm.pug
 
         .footer
             .container

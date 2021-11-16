@@ -22,6 +22,12 @@ $(document).ready(function () {
       };
 
       this.userTable = $("#userTableList");
+
+      this.confirm = {
+        window: $("#customConfirm"),
+        confirm: $("#resolveBtn"),
+        cancel: $("#rejectBtn"),
+      };
     }
 
     const _proto = DashboardForm.prototype;
@@ -55,8 +61,7 @@ $(document).ready(function () {
         e.preventDefault();
 
         // remove current cookie, setting it to expired and reload the page
-        document.cookie =
-          "userToken= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "userId= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
         location.href = "/";
       });
     };
@@ -79,13 +84,13 @@ $(document).ready(function () {
             body: JSON.stringify(formData),
             headers: {
               "Content-Type": "application/json",
-              "Accept": "application/json",
+              Accept: "application/json",
             },
           });
 
           let decodedAnswer = await response.json();
 
-          if (decodedAnswer.status == "false") {
+          if (decodedAnswer.status == false) {
             _this.forms.authForm
               .find(".formError")
               .empty()
@@ -94,20 +99,19 @@ $(document).ready(function () {
                   "Произошла ошибка, попробуйте позже."
               );
           } else {
-            if (
-              decodedAnswer.user_id != undefined
-            ) {
+            if (decodedAnswer.user_id != undefined) {
               document.cookie =
                 "userId=" + decodedAnswer.user_id + "; max-age=36000";
-                location.href = "/";
+              location.href = "/";
             } else {
               _this.forms.authForm
-              .find(".formError")
-              .empty()
-              .text(
-                decodedAnswer.error_message ??
-                  "Произошла ошибка, попробуйте позже."
-              );ß
+                .find(".formError")
+                .empty()
+                .text(
+                  decodedAnswer.error_message ??
+                    "Произошла ошибка, попробуйте позже."
+                );
+              ß;
             }
           }
         }
@@ -125,12 +129,13 @@ $(document).ready(function () {
         if ($(this).get(0).reportValidity()) {
           let formData = {
             userName: $(this).find("input[name=name]").val(),
+            userEmail: $(this).find("input[name=email]").val(),
             userPass: $(this).find("input[name=pass]").val(),
             userAge: $(this).find("input[name=age]").val(),
           };
 
           let response = await fetch("/users/create", {
-            method: "POST",
+            method: "PUT",
             body: JSON.stringify(formData),
             headers: {
               "Content-Type": "application/json",
@@ -140,7 +145,7 @@ $(document).ready(function () {
 
           let decodedAnswer = await response.json();
 
-          if (decodedAnswer.status == "false") {
+          if (decodedAnswer.status == false) {
             _this.forms.createUser
               .find(".formError")
               .empty()
@@ -179,13 +184,14 @@ $(document).ready(function () {
         if ($(this).get(0).reportValidity()) {
           let formData = {
             userId: $(this).find("input[name=userid]").val(),
+            userEmail: $(this).find("input[name=email]").val(),
             userName: $(this).find("input[name=name]").val(),
             userPass: $(this).find("input[name=pass]").val(),
             userAge: $(this).find("input[name=age]").val(),
           };
 
           let response = await fetch("/users/update", {
-            method: "POST",
+            method: "PATCH",
             body: JSON.stringify(formData),
             headers: {
               "Content-Type": "application/json",
@@ -195,7 +201,7 @@ $(document).ready(function () {
 
           let decodedAnswer = await response.json();
 
-          if (decodedAnswer.status == "false") {
+          if (decodedAnswer.status == false) {
             _this.forms.editUser
               .find(".formError")
               .empty()
@@ -238,8 +244,11 @@ $(document).ready(function () {
         '<td class="userNameTd">' +
         userData.name +
         "</td>" +
+        '<td class="userEmailTd">' +
+        (userData.email ?? " н/д ") +
+        "</td>" +
         '<td class="userAgeTd">' +
-        (userData.age ?? " н/д ") +
+        (userData.age ?? "") +
         "</td>" +
         "<td>" +
         '<div class="actions-wrapper">' +
@@ -287,46 +296,71 @@ $(document).ready(function () {
           userId = $(this).attr("data-userid"),
           tokenIdx = $(this).attr("data-tokenid");
 
+        console.log({
+          token_id: tokenIdx,
+          user_id: userId,
+        });
+
         if (opcode == "107") {
           // refresh token action
-          let response = await fetch("/users/resetToken", {
-            method: "POST",
-            body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          });
+          new Promise((resolve, reject) => {
+            _this.confirmShow(
+              resolve,
+              reject,
+              "Вы действительно хотите сгенерировать токен заново?"
+            );
+          })
+            .then(async (result) => {
+              let response = await fetch("/users/resetToken", {
+                method: "PATCH",
+                body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+              });
 
-          let decodedAnswer = await response.json();
+              let decodedAnswer = await response.json();
 
-          if (decodedAnswer.status == "true") {
-            // update rows with tokens
-            _this.updateTokenList(decodedAnswer.userData);
-          } else {
-            _this.customAlert(decodedAnswer.error_message);
-          }
+              if (decodedAnswer.status == true) {
+                // update rows with tokens
+                _this.updateTokenList(decodedAnswer.userData);
+              } else {
+                _this.customAlert(decodedAnswer.error_message);
+              }
+            })
+            .catch((reason) => {});
         }
 
         if (opcode == "109") {
           // delete token action
-          let response = await fetch("/users/deleteToken", {
-            method: "POST",
-            body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          });
+          new Promise((resolve, reject) => {
+            _this.confirmShow(
+              resolve,
+              reject,
+              "Вы действительно хотите удалить токен?"
+            );
+          })
+            .then(async (result) => {
+              let response = await fetch("/users/deleteToken", {
+                method: "DELETE",
+                body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+              });
 
-          let decodedAnswer = await response.json();
+              let decodedAnswer = await response.json();
 
-          if (decodedAnswer.status == "true") {
-            // update token rows
-            _this.updateTokenList(decodedAnswer.userData);
-          } else {
-            _this.customAlert(decodedAnswer.error_message);
-          }
+              if (decodedAnswer.status == true) {
+                // update token rows
+                _this.updateTokenList(decodedAnswer.userData);
+              } else {
+                _this.customAlert(decodedAnswer.error_message);
+              }
+            })
+            .catch((reason) => {});
         }
       });
     };
@@ -360,7 +394,7 @@ $(document).ready(function () {
 
           let decodedAnswer = await response.json();
 
-          if (decodedAnswer.status == "true") {
+          if (decodedAnswer.status == true) {
             if (opcode == "101") {
               // open modal window with editUserForm
               _this.showEditUserForm(decodedAnswer.userData);
@@ -372,23 +406,35 @@ $(document).ready(function () {
           }
         } else if (opcode == "103") {
           // delete action
-          let response = await fetch("/users/deleteById", {
-            method: "POST",
-            body: JSON.stringify({ userId: userId }),
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          });
+          new Promise((resolve, reject) => {
+            _this.confirmShow(
+              resolve,
+              reject,
+              "Вы действительно хотите удалить пользователя?"
+            );
+          })
+            .then(async () => {
+              let response = await fetch("/users/deleteById", {
+                method: "DELETE",
+                body: JSON.stringify({ userId: userId }),
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+              });
 
-          let decodedAnswer = await response.json();
+              let decodedAnswer = await response.json();
 
-          if (decodedAnswer.status == "true") {
-            // delete row
-            _this.userTable.find("tr[data-userid=" + userId + "]").remove();
-          } else {
-            _this.customAlert(decodedAnswer.error_message);
-          }
+              if (decodedAnswer.status == true) {
+                // delete row
+                _this.userTable.find("tr[data-userid=" + userId + "]").remove();
+              } else {
+                _this.customAlert(decodedAnswer.error_message);
+              }
+            })
+            .catch((reason) => {
+              console.log(reason);
+            });
         }
       });
     };
@@ -407,6 +453,7 @@ $(document).ready(function () {
       // populate inputs
       _this.forms.editUser.find('input[name="userid"]').val(userData.id);
       _this.forms.editUser.find('input[name="name"]').val(userData.name);
+      _this.forms.editUser.find('input[name="email"]').val(userData.email);
       _this.forms.editUser.find('input[name="pass"]').val(userData.password);
       _this.forms.editUser.find('input[name="age"]').val(userData.age);
 
@@ -424,27 +471,26 @@ $(document).ready(function () {
 
       let tokenList = "";
       $("#userTokenList").find("ul.token-list").empty();
-      if (
-        typeof userData.token == "object" &&
-        Object.keys(userData.token).length > 0
-      ) {
+      if (typeof userData.token == "object" && userData.token.length > 0) {
         for (let idx = 0; idx < userData.token.length; idx++) {
           tokenList +=
             '<li><div class="token-line">' +
-            userData.token[idx] +
+            userData.token[idx].token +
             '<div class="token-actions">' +
             '<button class="token-btn" data-opcode="107" data-userid="' +
             userData.id +
             '" data-tokenid="' +
-            idx +
+            userData.token[idx].id +
             '"><svg width="20" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="sync" class="svg-inline--fa fa-sync fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"></path></svg></button>' +
             '<button class="token-btn delete-btn" data-opcode="109" data-userid="' +
             userData.id +
             '" data-tokenid="' +
-            idx +
+            userData.token[idx].id +
             '"><svg width="20" aria-hidden="true" focusable="false" data-prefix="far" data-icon="trash-alt" class="svg-inline--fa fa-trash-alt fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M268 416h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12zM432 80h-82.41l-34-56.7A48 48 0 0 0 274.41 0H173.59a48 48 0 0 0-41.16 23.3L98.41 80H16A16 16 0 0 0 0 96v16a16 16 0 0 0 16 16h16v336a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128h16a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16zM171.84 50.91A6 6 0 0 1 177 48h94a6 6 0 0 1 5.15 2.91L293.61 80H154.39zM368 464H80V128h288zm-212-48h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12z"></path></svg></button>';
           ("</div></div></li>");
         }
+      } else {
+        tokenList = "<li>Нет доступных токенов</li>";
       }
 
       $("#userTokenList").find("ul.token-list").append(tokenList);
@@ -463,7 +509,7 @@ $(document).ready(function () {
 
         if (userId != undefined && userId != "") {
           let response = await fetch("/users/generateToken", {
-            method: "POST",
+            method: "PUT",
             body: JSON.stringify({ userId: userId }),
             headers: {
               "Content-Type": "application/json",
@@ -473,7 +519,7 @@ $(document).ready(function () {
 
           let decodedAnswer = await response.json();
 
-          if (decodedAnswer.status == "true") {
+          if (decodedAnswer.status == true) {
             // add new row to list
             _this.updateTokenList(decodedAnswer.userData);
           } else {
@@ -490,30 +536,50 @@ $(document).ready(function () {
 
       let tokenList = "";
       $("#userTokenList").find("ul.token-list").empty();
-      if (
-        typeof userData.token == "object" &&
-        Object.keys(userData.token).length > 0
-      ) {
+      if (typeof userData.token == "object" && userData.token.length > 0) {
         for (let idx = 0; idx < userData.token.length; idx++) {
           tokenList +=
             '<li><div class="token-line">' +
-            userData.token[idx] +
+            userData.token[idx].token +
             '<div class="token-actions">' +
             '<button class="token-btn" data-opcode="107" data-userid="' +
             userData.id +
             '" data-tokenid="' +
-            idx +
+            userData.token[idx].id +
             '"><svg width="20" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="sync" class="svg-inline--fa fa-sync fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"></path></svg></button>' +
             '<button class="token-btn delete-btn" data-opcode="109" data-userid="' +
             userData.id +
             '" data-tokenid="' +
-            idx +
+            userData.token[idx].id +
             '"><svg width="20" aria-hidden="true" focusable="false" data-prefix="far" data-icon="trash-alt" class="svg-inline--fa fa-trash-alt fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M268 416h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12zM432 80h-82.41l-34-56.7A48 48 0 0 0 274.41 0H173.59a48 48 0 0 0-41.16 23.3L98.41 80H16A16 16 0 0 0 0 96v16a16 16 0 0 0 16 16h16v336a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128h16a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16zM171.84 50.91A6 6 0 0 1 177 48h94a6 6 0 0 1 5.15 2.91L293.61 80H154.39zM368 464H80V128h288zm-212-48h24a12 12 0 0 0 12-12V188a12 12 0 0 0-12-12h-24a12 12 0 0 0-12 12v216a12 12 0 0 0 12 12z"></path></svg></button>';
           ("</div></div></li>");
         }
       }
 
       $("#userTokenList").find("ul.token-list").append(tokenList);
+    };
+
+    _proto.confirmShow = function (resolve, reject, message) {
+      const _this = this;
+
+      _this.confirm.window.find(".alert-message").empty().text(message);
+      _this.confirm.confirm.click(() => {
+        resolve(true);
+        _this.confirmHide();
+      });
+      _this.confirm.cancel.click(() => {
+        reject(false);
+        _this.confirmHide();
+      });
+      _this.confirm.window.modal({ keyboard: false });
+    };
+
+    _proto.confirmHide = function () {
+      const _this = this;
+
+      _this.confirm.confirm.unbind("click");
+      _this.confirm.cancel.unbind("click");
+      _this.confirm.window.modal("hide");
     };
 
     return new DashboardForm();

@@ -12,11 +12,14 @@ div.modal.fade#newUserForm(tabindex="-1" role="dialog")
                         label(for="newUserName") Имя Пользователи
                         input(type="text" name="name" class="form-control" id="newUserName" required="true" autocomplete="off")
                     .form-group
+                        label(for="newUserEmail") Email Пользователи
+                        input(type="email" name="email" class="form-control" id="newUserEmail" required="true" autocomplete="off")
+                    .form-group
                         label(for="newUserPass") Пароль
                         input(type="password" name="pass" class="form-control" id="newUserPass" required="true" autocomplete="off")
                     .form-group
                         label(for="newUserAge") Возраст
-                        input(type="number" min="0" max="99" step="1" name="age" class="form-control" id="newUserAge" required="true" autocomplete="off")
+                        input(type="number" min="0" max="99" step="1" name="age" class="form-control" id="newUserAge" autocomplete="off")
                         small.formError.form-text.text-danger
 
                     button.btn.btn-primary(type="submit") Добавить
