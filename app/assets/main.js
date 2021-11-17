@@ -155,10 +155,10 @@ $(document).ready(function () {
               );
           } else {
             if (
-              decodedAnswer.user_data != undefined &&
-              decodedAnswer.user_data != ""
+              decodedAnswer.userData != undefined &&
+              decodedAnswer.userData != ""
             ) {
-              _this.addNewUserRow(decodedAnswer.user_data);
+              _this.addNewUserRow(decodedAnswer.userData);
               // reset create user form
               _this.forms.createUser.get(0).reset();
 

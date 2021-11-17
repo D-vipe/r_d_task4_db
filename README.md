@@ -18,10 +18,10 @@ add database connection to existing project
     # add password to express_admin user
     2.6 ALTER USER express_admin WITH ENCRYPTED PASSWORD 's3cr3tpass'
     # type \q to exit commannd line
-3. create .env file and copy data from env_example. User credentials for user and password above
+3. create .env file and copy data from env_example. User credentials for user and password above (express_admin | 's3cr3tpass')
 # run migrations
 4. sequelize db:migrate
 # seed db
 5. sequelize db:seed:all
-6. npm start (or if using VScode open Explorer. At the bottom of the side panel you can find NPM SCRIPTS section. Toggle it and press "start")
-7. to authorize login: admin, password: gogo123 (admin auth)
+6. npm run start_dev (or if using VScode open Explorer. At the bottom of the side panel you can find NPM SCRIPTS section. Toggle it and press "start_dev")
+7. to authorize login: admin@admin.ru, password: gogo123 (admin auth)

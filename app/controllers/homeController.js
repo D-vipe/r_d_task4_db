@@ -46,11 +46,6 @@ async function checkUserAuth(req) {
   // Check session first if no user session, check cookie and set session user
   let session_user = req.session.user;
 
-  console.log({
-    session_user: session_user === undefined,
-    request_cookie: req.cookies.userId == undefined,
-  });
-
   if (session_user === undefined) {
     if (req.cookies.userId === undefined) {
       return false;

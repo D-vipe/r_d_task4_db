@@ -33,12 +33,9 @@ exports.authUser = async function (req, res) {
         .status(404)
         .json({ status: false, error_message: "Пользователь не найден" });
     } else {
-      // compare user password
-      console.log({ user_data: userData });
-
       if (md5(md5(formPass)) !== userData.password) {
         res
-          .status(200)
+          .status(400)
           .json({ status: false, error_message: "Неверный пароль" });
       } else {
         req.session.user = {
@@ -74,12 +71,13 @@ exports.addUser = async function (req, res) {
       const newUser = await models.User.create({
         name: req.body.userName,
         email: req.body.userEmail,
+        age: req.body.userAge,
         password: md5(md5(req.body.userPass)),
         isAdmin: false,
       });
 
-      if (newUser !== false && newUser !== null && newUser !== undefined) {
-        res.status(200).json({ status: true, user_data: newUser });
+      if (newUser) {
+        res.status(200).json({ status: true, userData: newUser });
       } else {
         res.status(400).json({
           status: false,
@@ -88,7 +86,7 @@ exports.addUser = async function (req, res) {
         });
       }
     } else {
-      res.status(200).json({
+      res.status(400).json({
         status: false,
         error_message: "Пользователь с таким email уже существует",
       });
@@ -97,11 +95,7 @@ exports.addUser = async function (req, res) {
 };
 
 exports.getById = async function (req, res) {
-  if (
-    req.body.userId != undefined &&
-    req.body.userId != null &&
-    req.body.userId != ""
-  ) {
+  if (req.body.userId) {
     const user = await models.User.findOne({
       include: [
         {
@@ -115,7 +109,7 @@ exports.getById = async function (req, res) {
     if (user !== null) {
       res.status(200).json({ status: true, userData: user });
     } else {
-      res.status(200).json({
+      res.status(404).json({
         status: false,
         error_message: "Не удалось найти пользователя",
       });
@@ -157,11 +151,7 @@ exports.update = async function (req, res) {
 };
 
 exports.generateToken = async function (req, res) {
-  if (
-    req.body.userId != undefined &&
-    req.body.userId != null &&
-    req.body.userId != ""
-  ) {
+  if (req.body.userId) {
     const user = await models.User.findOne({
       include: [
         {
@@ -194,7 +184,7 @@ exports.generateToken = async function (req, res) {
         } else {
           await models.Token.destroy({ where: { userId: req.body.userId } });
           res
-            .status(200)
+            .status(404)
             .json({
               status: false,
               error_message:
@@ -202,13 +192,13 @@ exports.generateToken = async function (req, res) {
             });
         }
       } else {
-        res.status(200).json({
+        res.status(400).json({
           status: false,
           error_message: "Не удалось сгенерировать токен",
         });
       }
     } else {
-      res.status(200).json({
+      res.status(400).json({
         status: false,
         error_message: "Не удалось найти пользователя",
       });
@@ -250,12 +240,12 @@ exports.resetToken = async function (req, res) {
         await models.Token.destroy({ where: { userId: req.body.userId } });
 
         res
-          .status(200)
+          .status(404)
           .json({ status: false, error_message: "Пользователь не найден. Вероятно он был удален ранее. Все токены данного пользователя удалены автоматически" });
       }
     } else {
       res
-        .status(200)
+        .status(400)
         .json({ status: false, error_message: "Не удалось обновить токен" });
     }
   } else {
@@ -290,7 +280,7 @@ exports.deleteToken = async function (req, res) {
       // user might have been deleted by another person
       // delete all the rest tokens in this case
       await models.Token.destroy({ where: { userId: req.body.userId } });
-      res.status(200).json({ status: false, error_message: 'Пользователь был удален ранее, все токены данного пользователя автоматически удалены. Перезагрузите страницу' });
+      res.status(404).json({ status: false, error_message: 'Пользователь был удален ранее, все токены данного пользователя автоматически удалены. Перезагрузите страницу' });
     }
   } else {
     res
@@ -308,8 +298,6 @@ exports.deleteById = async function (req, res) {
           id: req.body.userId,
         },
       });
-      console.log({ action: "delete user", result: deletedUser });
-
       res.status(200).json({ status: true });
     } else {
       res
@@ -317,7 +305,7 @@ exports.deleteById = async function (req, res) {
         .json({ status: false, error_message: "Не указан id пользователя" });
     }
   } else {
-    res.status(200).json({
+    res.status(400).json({
       status: false,
       error_message:
         "Только пользователь с админ.правами может удалять других пользователей",

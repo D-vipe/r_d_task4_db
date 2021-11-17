@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app/index.js && open http://localhost:3000",
-    "start_nodemon": "nodemon app/index.js"
+    "start_dev": "nodemon app/index.js"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +24,7 @@
     "pug": "^3.0.2",
     "sequelize": "^6.9.0",
     "sequelize-cli": "^6.3.0",
+    "swagger-jsdoc": "^6.1.0",
     "swagger-ui-express": "^4.1.6",
     "uuid": "^8.3.2"
   },
