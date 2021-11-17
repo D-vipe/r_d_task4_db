@@ -25,3 +25,4 @@ add database connection to existing project
 5. sequelize db:seed:all
 6. npm run start_dev (or if using VScode open Explorer. At the bottom of the side panel you can find NPM SCRIPTS section. Toggle it and press "start_dev")
 7. to authorize login: admin@admin.ru, password: gogo123 (admin auth)
+8. swagger documentation is available at http://localhost:3000/docs
