@@ -1,3 +1,5 @@
+// allow us to hide our connection secret in the process.env object
+require('dotenv').config();
 const express = require("express"),
   path = require("path"),
   cors = require("cors"),
@@ -46,6 +48,12 @@ let corsOptions = {
 app.set("views", path.join(__dirname, "/views"));
 app.set("view engine", "pug");
 
+// the messenger between our app and our database
+const mongoose = require('mongoose')
+
+// establish connection & give yourself a message so you know when its complete
+const source = process.env.MONGO_DATABASE
+
 const userRouter = require("./routers/userRouter");
 const homeRouter = require("./routers/homeRouter");
 
@@ -61,6 +69,12 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 
 app.use(express.static(__dirname + "/assets"));
+
+mongoose.connect(source, {})
+const connection = mongoose.connection
+connection.once('open', () => {
+  console.log("DB connected.");
+})
 
 app.use("/users", userRouter);
 app.use("/", homeRouter);

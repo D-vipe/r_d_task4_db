@@ -1,8 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const models = require("../../database/models");
-
-const filePath = path.resolve(__dirname + "/../public/users.json");
+const User = require("../models.mongo/user.model");
+// const models = require("../../database/models");
 
 exports.index = function (req, res) {
   // check if we have user relative cookie
@@ -15,14 +14,17 @@ exports.index = function (req, res) {
         text1: "test text",
       });
     } else {
-      let userList = await models.User.findAll({
-        include: [
-          {
-            model: models.Token,
-            as: "token",
-          },
-        ],
-      });
+      // let userList = await models.User.findAll({
+      //   include: [
+      //     {
+      //       model: models.Token,
+      //       as: "token",
+      //     },
+      //   ],
+      // });
+      const userList = await User.find().exec();
+
+      console.log(userList);
       res.render("list_screen", {
         title: "Main",
         user: req.session.user,
@@ -30,16 +32,6 @@ exports.index = function (req, res) {
       });
     }
   });
-
-  // if (!checkUserAuth(req)) {
-
-  // } else {
-
-  // }
-};
-
-exports.about = function (req, res) {
-  res.send("О сайте");
 };
 
 async function checkUserAuth(req) {
@@ -50,9 +42,13 @@ async function checkUserAuth(req) {
     if (req.cookies.userId === undefined) {
       return false;
     } else {
-      let userData = await models.User.findOne({
-        where: { id: parseInt(req.cookies.userId) },
-      });
+      // let userData = await models.User.findOne({
+      //   where: { id: parseInt(req.cookies.userId) },
+      // });
+      const userData = await User.findOne({
+        id: req.cookies.userId,
+      }).exec();
+
       req.session.user = {
         id: userData.id,
         is_admin: userData.isAdmin,
