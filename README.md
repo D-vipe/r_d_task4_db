@@ -1,5 +1,5 @@
-# r_d_task4_db
-add database connection to existing project
+# r_d_task5_mongodb
+switch to MongoDB
 
 # Install dependencies
 1. yarn install
