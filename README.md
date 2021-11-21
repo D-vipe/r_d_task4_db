@@ -31,10 +31,14 @@ add database connection to existing project
 6. db.testDb (create admin user to have access to admin panel)
 7. node app/seeder.mongo.js (seed collection with test data)
 
-# run migrations
-4. sequelize db:migrate
-# seed db
-5. sequelize db:seed:all
-6. npm run start_dev (or if using VScode open Explorer. At the bottom of the side panel you can find NPM SCRIPTS section. Toggle it and press "start_dev")
-7. to authorize login: admin@admin.ru, password: gogo123 (admin auth)
-8. swagger documentation is available at http://localhost:3000/docs
+<!-- # run migrations
+4. sequelize db:migrate -->
+<!-- # seed db
+5. sequelize db:seed:all -->
+
+# Starting app and authorizing
+1. npm run start_dev (or if using VScode open Explorer. At the bottom of the side panel you can find NPM SCRIPTS section. Toggle it and press "start_dev")
+2. to authorize login: admin@admin.ru, password: gogo123 (admin auth)
+
+# Swagger info
+1. swagger documentation is available at http://localhost:3000/docs
