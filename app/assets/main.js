@@ -61,7 +61,7 @@ $(document).ready(function () {
         e.preventDefault();
 
         // remove current cookie, setting it to expired and reload the page
-        document.cookie = "userId= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "token= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
         location.href = "/";
       });
     };
@@ -99,9 +99,12 @@ $(document).ready(function () {
                   "Произошла ошибка, попробуйте позже."
               );
           } else {
-            if (decodedAnswer.user_id != undefined) {
+            if (decodedAnswer.token) {
+              let date = new Date();
+              date.setTime(date.getTime()+(24*60*60*1000));
+              const expires = "; expires="+date.toGMTString();
               document.cookie =
-                "userId=" + decodedAnswer.user_id + "; max-age=36000";
+                "token=" + decodedAnswer.token + expires + "; path=/";
               location.href = "/";
             } else {
               _this.forms.authForm
@@ -111,7 +114,6 @@ $(document).ready(function () {
                   decodedAnswer.error_message ??
                     "Произошла ошибка, попробуйте позже."
                 );
-              ß;
             }
           }
         }

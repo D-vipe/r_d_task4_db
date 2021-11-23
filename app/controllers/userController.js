@@ -6,6 +6,7 @@ const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 const md5 = require("md5");
 const validator = require("email-validator");
+const jwt = require("jsonwebtoken");
 
 const filePath = path.resolve(__dirname + "/../public/users.json");
 
@@ -40,13 +41,19 @@ exports.authUser = async function (req, res) {
           .status(400)
           .json({ status: false, error_message: "Неверный пароль" });
       } else {
+        // create jwt
+        const userJwt = jwt.sign({
+          user_id: userData._id
+        }, process.env.TOKEN_KEY,
+        { expiresIn: "24h" });
+
         req.session.user = {
-          id: userData.id,
+          id: userData._id,
           is_admin: userData.isAdmin,
-          name: userData.name,
+          name: userData.name
         };
 
-        res.status(200).json({ status: true, user_id: userData.id });
+        res.status(200).json({ status: true, token: userJwt });
       }
     }
   }

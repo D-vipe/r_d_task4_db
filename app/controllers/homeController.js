@@ -3,35 +3,39 @@ const path = require("path");
 const User = require("../models.mongo/user.model");
 // const models = require("../../database/models");
 
-exports.index = function (req, res) {
+exports.index = async function (req, res) {
   // check if we have user relative cookie
 
-  checkUserAuth(req).then(async (result) => {
-    console.log({ auth_res: result });
-    if (result == false) {
-      res.render("main_screen", {
-        title: "Auth",
-        text1: "test text",
-      });
-    } else {
-      // let userList = await models.User.findAll({
-      //   include: [
-      //     {
-      //       model: models.Token,
-      //       as: "token",
-      //     },
-      //   ],
-      // });
-      const userList = await User.find().exec();
+  const userList = await User.find().exec();
 
-      console.log(userList);
-      res.render("list_screen", {
-        title: "Main",
-        user: req.session.user,
-        usersList: userList,
-      });
-    }
+  res.render("list_screen", {
+    title: "Main",
+    user: req.session.user,
+    usersList: userList,
   });
+
+  // checkUserAuth(req).then(async (result) => {
+  //   console.log({ auth_res: result });
+  //   if (result == false) {
+  //     res.render("main_screen", {
+  //       title: "Auth",
+  //       text1: "test text",
+  //     });
+  //   } else {
+  //     // let userList = await models.User.findAll({
+  //     //   include: [
+  //     //     {
+  //     //       model: models.Token,
+  //     //       as: "token",
+  //     //     },
+  //     //   ],
+  //     // });
+  //     const userList = await User.find().exec();
+
+  //     console.log(userList);
+
+  //   }
+  // });
 };
 
 async function checkUserAuth(req) {

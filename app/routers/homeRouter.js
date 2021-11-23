@@ -1,4 +1,5 @@
 const express = require("express");
+const checkAuth = require("../middleware/auth");
 const homeController = require("../controllers/homeController.js");
 const homeRouter = express.Router();
 
@@ -68,5 +69,5 @@ const homeRouter = express.Router();
  *                       updatedAt:
  *                         type: date
 */
-homeRouter.get("/", homeController.index);
+homeRouter.get("/", checkAuth, homeController.index);
 module.exports = homeRouter;

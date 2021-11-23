@@ -1,5 +1,6 @@
 const express = require("express");
 const jsonParser = express.json();
+const checkPost = require("../middleware/verify_post");
 const userController = require("../controllers/userController.js");
 const userRouter = express.Router();
 
@@ -172,7 +173,7 @@ const userRouter = express.Router();
   *                   description: message explaining what went wrong
   *                   example: Что-то пошло не так, не удалось добавить пользователя
   */
- userRouter.post("/getById", jsonParser, userController.getById);
+ userRouter.post("/getById", [jsonParser, checkPost], userController.getById);
 
 /**
  * @swagger
@@ -251,7 +252,7 @@ const userRouter = express.Router();
  *                   description: message explaining what went wrong
  *                   example: Что-то пошло не так, не удалось добавить пользователя
  */
-userRouter.put("/create", jsonParser, userController.addUser);
+userRouter.put("/create", [jsonParser, checkPost], userController.addUser);
 
 /**
  * @swagger
@@ -324,7 +325,7 @@ userRouter.put("/create", jsonParser, userController.addUser);
  *                   description: message explaining what went wrong
  *                   example: Что-то пошло не так, не удалось добавить пользователя
  */
-userRouter.patch("/update", jsonParser, userController.update);
+userRouter.patch("/update", [jsonParser, checkPost], userController.update);
 
 /**
  * @swagger
@@ -423,7 +424,7 @@ userRouter.patch("/update", jsonParser, userController.update);
  *                   description: message explaining what went wrong
  *                   example: Что-то пошло не так, не удалось добавить пользователя
  */
-userRouter.put("/generateToken", jsonParser, userController.generateToken);
+userRouter.put("/generateToken", [jsonParser, checkPost], userController.generateToken);
 
 
 /**
@@ -526,7 +527,7 @@ userRouter.put("/generateToken", jsonParser, userController.generateToken);
  *                   description: message explaining what went wrong
  *                   example: Что-то пошло не так, не удалось добавить пользователя
  */
-userRouter.patch("/resetToken", jsonParser, userController.resetToken);
+userRouter.patch("/resetToken", [jsonParser, checkPost], userController.resetToken);
 
 /**
  * @swagger
@@ -628,7 +629,7 @@ userRouter.patch("/resetToken", jsonParser, userController.resetToken);
  *                   description: message explaining what went wrong
  *                   example: Что-то пошло не так, не удалось добавить пользователя
  */
-userRouter.delete("/deleteToken", jsonParser, userController.deleteToken);
+userRouter.delete("/deleteToken", [jsonParser, checkPost], userController.deleteToken);
 
 /**
  * @swagger
@@ -689,6 +690,6 @@ userRouter.delete("/deleteToken", jsonParser, userController.deleteToken);
  *                   description: message explaining what went wrong
  *                   example: Что-то пошло не так, не удалось добавить пользователя
  */
-userRouter.delete("/deleteById", jsonParser, userController.deleteById);
+userRouter.delete("/deleteById", [jsonParser, checkPost], userController.deleteById);
 
 module.exports = userRouter;
