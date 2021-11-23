@@ -101,8 +101,8 @@ $(document).ready(function () {
           } else {
             if (decodedAnswer.token) {
               let date = new Date();
-              date.setTime(date.getTime()+(24*60*60*1000));
-              const expires = "; expires="+date.toGMTString();
+              date.setTime(date.getTime() + 24 * 60 * 60 * 1000);
+              const expires = "; expires=" + date.toGMTString();
               document.cookie =
                 "token=" + decodedAnswer.token + expires + "; path=/";
               location.href = "/";
@@ -134,6 +134,7 @@ $(document).ready(function () {
             userEmail: $(this).find("input[name=email]").val(),
             userPass: $(this).find("input[name=pass]").val(),
             userAge: $(this).find("input[name=age]").val(),
+            token: _this.getCookie("token"),
           };
 
           let response = await fetch("/users/create", {
@@ -155,6 +156,9 @@ $(document).ready(function () {
                 decodedAnswer.error_message ??
                   "Произошла ошибка, попробуйте позже."
               );
+            if (decodedAnswer.reload) {
+              location.href = "/";
+            }
           } else {
             if (
               decodedAnswer.userData != undefined &&
@@ -190,6 +194,7 @@ $(document).ready(function () {
             userName: $(this).find("input[name=name]").val(),
             userPass: $(this).find("input[name=pass]").val(),
             userAge: $(this).find("input[name=age]").val(),
+            token: _this.getCookie("token"),
           };
 
           let response = await fetch("/users/update", {
@@ -211,6 +216,9 @@ $(document).ready(function () {
                 decodedAnswer.error_message ??
                   "Произошла ошибка, попробуйте позже."
               );
+            if (decodedAnswer.reload) {
+              location.href = "/";
+            }
           } else {
             if (
               decodedAnswer.userData != undefined &&
@@ -315,7 +323,11 @@ $(document).ready(function () {
             .then(async (result) => {
               let response = await fetch("/users/resetToken", {
                 method: "PATCH",
-                body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
+                body: JSON.stringify({
+                  userId: userId,
+                  tokenId: tokenIdx,
+                  token: _this.getCookie("token"),
+                }),
                 headers: {
                   "Content-Type": "application/json",
                   Accept: "application/json",
@@ -329,6 +341,11 @@ $(document).ready(function () {
                 _this.updateTokenList(decodedAnswer.userData);
               } else {
                 _this.customAlert(decodedAnswer.error_message);
+                if (decodedAnswer.reload) {
+                  setTimeout(() => {
+                    location.href = "/";
+                  }, 3000);
+                }
               }
             })
             .catch((reason) => {});
@@ -346,7 +363,11 @@ $(document).ready(function () {
             .then(async (result) => {
               let response = await fetch("/users/deleteToken", {
                 method: "DELETE",
-                body: JSON.stringify({ userId: userId, tokenId: tokenIdx }),
+                body: JSON.stringify({
+                  userId: userId,
+                  tokenId: tokenIdx,
+                  token: _this.getCookie("token"),
+                }),
                 headers: {
                   "Content-Type": "application/json",
                   Accept: "application/json",
@@ -360,6 +381,11 @@ $(document).ready(function () {
                 _this.updateTokenList(decodedAnswer.userData);
               } else {
                 _this.customAlert(decodedAnswer.error_message);
+                if (decodedAnswer.reload) {
+                  setTimeout(() => {
+                    location.href = "/";
+                  }, 3000);
+                }
               }
             })
             .catch((reason) => {});
@@ -387,7 +413,10 @@ $(document).ready(function () {
           // find user and fetch data from file
           let response = await fetch("/users/getById", {
             method: "POST",
-            body: JSON.stringify({ userId: userId }),
+            body: JSON.stringify({
+              userId: userId,
+              token: _this.getCookie("token"),
+            }),
             headers: {
               "Content-Type": "application/json",
               Accept: "application/json",
@@ -405,6 +434,11 @@ $(document).ready(function () {
             }
           } else {
             _this.customAlert(decodedAnswer.error_message);
+            if (decodedAnswer.reload) {
+              setTimeout(() => {
+                location.href = "/";
+              }, 3000);
+            }
           }
         } else if (opcode == "103") {
           // delete action
@@ -418,7 +452,10 @@ $(document).ready(function () {
             .then(async () => {
               let response = await fetch("/users/deleteById", {
                 method: "DELETE",
-                body: JSON.stringify({ userId: userId }),
+                body: JSON.stringify({
+                  userId: userId,
+                  token: _this.getCookie("token"),
+                }),
                 headers: {
                   "Content-Type": "application/json",
                   Accept: "application/json",
@@ -432,6 +469,11 @@ $(document).ready(function () {
                 _this.userTable.find("tr[data-userid=" + userId + "]").remove();
               } else {
                 _this.customAlert(decodedAnswer.error_message);
+                if (decodedAnswer.reload) {
+                  setTimeout(() => {
+                    location.href = "/";
+                  }, 3000);
+                }
               }
             })
             .catch((reason) => {
@@ -452,9 +494,11 @@ $(document).ready(function () {
 
       // reset form
       _this.forms.editUser.get(0).reset();
-      console.log({'populate edit form': userData.id ?? userData._id})
+      console.log({ "populate edit form": userData.id ?? userData._id });
       // populate inputs
-      _this.forms.editUser.find('input[name="userid"]').val(userData.id ?? userData._id);
+      _this.forms.editUser
+        .find('input[name="userid"]')
+        .val(userData.id ?? userData._id);
       _this.forms.editUser.find('input[name="name"]').val(userData.name);
       _this.forms.editUser.find('input[name="email"]').val(userData.email);
       _this.forms.editUser.find('input[name="pass"]').val(userData.password);
@@ -513,7 +557,10 @@ $(document).ready(function () {
         if (userId != undefined && userId != "") {
           let response = await fetch("/users/generateToken", {
             method: "PUT",
-            body: JSON.stringify({ userId: userId }),
+            body: JSON.stringify({
+              userId: userId,
+              token: _this.getCookie("token"),
+            }),
             headers: {
               "Content-Type": "application/json",
               Accept: "application/json",
@@ -527,9 +574,19 @@ $(document).ready(function () {
             _this.updateTokenList(decodedAnswer.userData);
           } else {
             _this.customAlert(decodedAnswer.error_message);
+            if (decodedAnswer.reload) {
+              setTimeout(() => {
+                location.href = "/";
+              }, 3000);
+            }
           }
         } else {
           _this.customAlert("Не хватает параметров");
+          if (decodedAnswer.reload) {
+            setTimeout(() => {
+              location.href = "/";
+            }, 3000);
+          }
         }
       });
     };
@@ -548,7 +605,7 @@ $(document).ready(function () {
             '<button class="token-btn" data-opcode="107" data-userid="' +
             (userData.id ?? userData._id) +
             '" data-tokenid="' +
-            (userData.token[idx].id ?? idx)+
+            (userData.token[idx].id ?? idx) +
             '"><svg width="20" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="sync" class="svg-inline--fa fa-sync fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M440.65 12.57l4 82.77A247.16 247.16 0 0 0 255.83 8C134.73 8 33.91 94.92 12.29 209.82A12 12 0 0 0 24.09 224h49.05a12 12 0 0 0 11.67-9.26 175.91 175.91 0 0 1 317-56.94l-101.46-4.86a12 12 0 0 0-12.57 12v47.41a12 12 0 0 0 12 12H500a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12h-47.37a12 12 0 0 0-11.98 12.57zM255.83 432a175.61 175.61 0 0 1-146-77.8l101.8 4.87a12 12 0 0 0 12.57-12v-47.4a12 12 0 0 0-12-12H12a12 12 0 0 0-12 12V500a12 12 0 0 0 12 12h47.35a12 12 0 0 0 12-12.6l-4.15-82.57A247.17 247.17 0 0 0 255.83 504c121.11 0 221.93-86.92 243.55-201.82a12 12 0 0 0-11.8-14.18h-49.05a12 12 0 0 0-11.67 9.26A175.86 175.86 0 0 1 255.83 432z"></path></svg></button>' +
             '<button class="token-btn delete-btn" data-opcode="109" data-userid="' +
             (userData.id ?? userData._id) +
@@ -583,6 +640,22 @@ $(document).ready(function () {
       _this.confirm.confirm.unbind("click");
       _this.confirm.cancel.unbind("click");
       _this.confirm.window.modal("hide");
+    };
+
+    _proto.getCookie = function (cname) {
+      let name = cname + "=";
+      let decodedCookie = decodeURIComponent(document.cookie);
+      let ca = decodedCookie.split(";");
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == " ") {
+          c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return "";
     };
 
     return new DashboardForm();

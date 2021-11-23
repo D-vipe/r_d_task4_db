@@ -7,15 +7,48 @@ const { v4: uuidv4 } = require("uuid");
 const md5 = require("md5");
 const validator = require("email-validator");
 const jwt = require("jsonwebtoken");
+const Validator = require("fastest-validator");
+
+const v = new Validator();
+
+const schemaUser = {
+  age: { type: "number", positive: true, integer: true, optional: true },
+  name: { type: "string" },
+  isAdmin: { type: "boolean", optional: true, default: false },
+  password: { type: "string" },
+  email: { type: "string" },
+  token: { type: "array", items: "object", optional: true },
+};
+
+const schemaToken = {
+  token: { type: "string" },
+  createdAt: { type: "date", optional: true },
+  updatedAt: { type: "date", optional: true },
+};
+
+const schemaUserId = {
+  id: { type: "string" },
+};
+
+const schemaTokenId = {
+  id: { type: "number", integer: true },
+};
+
+const checkUser = v.compile(schemaUser);
+const checkToken = v.compile(schemaToken);
+const checkTokenId = v.compile(schemaTokenId);
+const checkUserId = v.compile(schemaUserId);
 
 const filePath = path.resolve(__dirname + "/../public/users.json");
 
 exports.authUser = async function (req, res) {
-  let formUser = req.body.userEmail ?? "",
-    formPass = req.body.userPass ?? "";
+  // let formUser = req.body.userEmail ?? "",
+  // formPass = req.body.userPass ?? "";
+
+  let { userEmail, userPass } = req.body;
 
   // validate email
-  if (!validator.validate(formUser)) {
+  if (!validator.validate(userEmail)) {
     res
       .status(400)
       .json({ status: false, error_message: "Неверный формат email" });
@@ -29,28 +62,31 @@ exports.authUser = async function (req, res) {
     //   ],
     //   where: { email: formUser },
     // });
-    const userData = await User.findOne({ email: formUser }).exec();
+    const userData = await User.findOne({ email: userEmail }).exec();
 
     if (userData === null) {
       res
         .status(404)
         .json({ status: false, error_message: "Пользователь не найден" });
     } else {
-      if (md5(md5(formPass)) !== userData.password) {
+      if (md5(md5(userPass)) !== userData.password) {
         res
           .status(400)
           .json({ status: false, error_message: "Неверный пароль" });
       } else {
         // create jwt
-        const userJwt = jwt.sign({
-          user_id: userData._id
-        }, process.env.TOKEN_KEY,
-        { expiresIn: "24h" });
+        const userJwt = jwt.sign(
+          {
+            user_id: userData._id,
+          },
+          process.env.TOKEN_KEY,
+          { expiresIn: "24h" }
+        );
 
         req.session.user = {
           id: userData._id,
           is_admin: userData.isAdmin,
-          name: userData.name
+          name: userData.name,
         };
 
         res.status(200).json({ status: true, token: userJwt });
@@ -61,11 +97,25 @@ exports.authUser = async function (req, res) {
 
 exports.addUser = async function (req, res) {
   // validate email
-  if (!validator.validate(req.body.userEmail)) {
+  const { userEmail, userName, userAge, userPass } = req.body;
+
+  if (!validator.validate(userEmail)) {
     res
       .status(400)
       .json({ status: false, error_message: "Неверный формат email" });
   } else {
+    if (
+      !checkUser({
+        age: userAge,
+        name: userName,
+        password: userPass,
+        email: userEmail,
+      })
+    ) {
+      res
+        .status(400)
+        .json({ status: false, error_message: "Неверные параметры запроса" });
+    }
     // let existingUser = await models.User.findOne({
     //   include: [
     //     {
@@ -77,8 +127,8 @@ exports.addUser = async function (req, res) {
     // });
 
     let existingUser = await User.findOne(
-      { email: req.body.userEmail },
-      "id name email age isAdmin"
+      { email: userEmail },
+      "_id name email age isAdmin"
     ).exec();
 
     if (existingUser === null) {
@@ -91,10 +141,10 @@ exports.addUser = async function (req, res) {
       // });
 
       const newUser = await User.create({
-        name: req.body.userName,
-        email: req.body.userEmail,
-        age: req.body.userAge,
-        password: md5(md5(req.body.userPass)),
+        name: userName,
+        email: userEmail,
+        age: userAge,
+        password: md5(md5(userPass)),
         isAdmin: false,
       });
 
@@ -117,6 +167,13 @@ exports.addUser = async function (req, res) {
 };
 
 exports.getById = async function (req, res) {
+  const { userId } = req.body;
+  if (!checkUserId({ id: userId })) {
+    res
+      .status(400)
+      .json({ status: false, error_message: "Неверные параметры запроса" });
+  }
+
   if (req.body.userId) {
     // const user = await models.User.findOne({
     //   include: [
@@ -130,7 +187,7 @@ exports.getById = async function (req, res) {
 
     const user = await User.findOne(
       {
-        _id: req.body.userId,
+        _id: userId,
       },
       "id name email age isAdmin token"
     ).exec();
@@ -152,8 +209,9 @@ exports.getById = async function (req, res) {
 };
 
 exports.update = async function (req, res) {
+  let { userId, userEmail, userName, userPass, userAge } = req.body;
   // validate email
-  if (validator.validate(req.body.userEmail)) {
+  if (validator.validate(userEmail)) {
     // const updatedUser = await models.User.update(
     //   {
     //     name: req.body.userName,
@@ -163,26 +221,40 @@ exports.update = async function (req, res) {
     //   },
     //   { where: { id: req.body.userId }, returning: true, plain: true }
     // );
+
+    if (
+      !checkUser({
+        age: parseInt(userAge),
+        name: userName,
+        password: userPass,
+        email: userEmail,
+      })
+    ) {
+      res
+        .status(400)
+        .json({ status: false, error_message: "Неверные параметры запроса" });
+    }
+
     let updatedUser;
     let fields_to_update;
-    if (req.body.userPass) {
+    if (userPass) {
       fields_to_update = {
-        name: req.body.userName,
-        email: req.body.userEmail,
-        password: req.body.userPass,
-        age: req.body.userAge,
+        name: userName,
+        email: userEmail,
+        password: userPass,
+        age: userAge,
       };
     } else {
       fields_to_update = {
-        name: req.body.userName,
-        email: req.body.userEmail,
-        age: req.body.userAge,
+        name: userName,
+        email: userEmail,
+        age: userAge,
       };
     }
 
     try {
       updatedUser = await User.findOneAndUpdate(
-        { _id: req.body.userId },
+        { _id: userId },
         fields_to_update,
         { new: true }
       );
@@ -208,7 +280,13 @@ exports.update = async function (req, res) {
 };
 
 exports.generateToken = async function (req, res) {
-  if (req.body.userId) {
+  const { userId } = req.body;
+  if (!checkUserId({ id: userId })) {
+    res
+      .status(400)
+      .json({ status: false, error_message: "Неверные параметры запроса" });
+  }
+  if (userId) {
     // const user = await models.User.findOne({
     //   include: [
     //     {
@@ -220,7 +298,7 @@ exports.generateToken = async function (req, res) {
     // });
     const user = await User.findOne(
       {
-        _id: req.body.userId,
+        _id: userId,
       },
       "id name email age token"
     ).exec();
@@ -271,7 +349,7 @@ exports.generateToken = async function (req, res) {
       // });
 
       await User.updateOne(
-        { _id: req.body.userId },
+        { _id: userId },
         {
           $push: {
             token: {
@@ -313,7 +391,19 @@ exports.generateToken = async function (req, res) {
 };
 
 exports.resetToken = async function (req, res) {
-  if (req.body.userId && req.body.tokenId) {
+  const { userId, tokenId } = req.body;
+  if (userId && tokenId) {
+    if (!checkUserId({ id: userId })) {
+      res
+        .status(400)
+        .json({ status: false, error_message: "Неверные параметры запроса" });
+    }
+
+    if (!checkTokenId({ id: parseInt(tokenId) })) {
+      res
+        .status(400)
+        .json({ status: false, error_message: "Неверные параметры запроса" });
+    }
     // update necessary token
     // const updatedToken = await models.Token.update(
     //   {
@@ -352,21 +442,21 @@ exports.resetToken = async function (req, res) {
     //     .json({ status: false, error_message: "Не удалось обновить токен" });
     // }
     const user = await User.findOne(
-      { _id: req.body.userId },
+      { _id: userId },
       "id name email age token"
     ).exec();
 
     if (user) {
       if (user.token.length > 0) {
-        if (user.token[req.body.tokenId]) {
-          user.token[req.body.tokenId] = {
+        if (user.token[tokenId]) {
+          user.token[tokenId] = {
             token: uuidv4(),
             createdAt: new Date(),
             updatedAt: new Date(),
           };
 
           const updatedUser = await User.findOneAndUpdate(
-            { _id: req.body.userId },
+            { _id: userId },
             {
               token: user.token,
             },
@@ -403,65 +493,72 @@ exports.resetToken = async function (req, res) {
 };
 
 exports.deleteToken = async function (req, res) {
-  if (req.body.userId && req.body.tokenId) {
-    // const deletedToken = await models.Token.destroy({
-    //   where: { id: req.body.tokenId },
-    // });
+  const { userId, tokenId } = req.body;
 
-    // const updatedUser = await models.User.findOne({
-    //   include: [
-    //     {
-    //       model: models.Token,
-    //       as: "token",
-    //     },
-    //   ],
-    //   where: { id: req.body.userId },
-    // });
+  if (!checkUserId({ id: userId })) {
+    res
+      .status(400)
+      .json({ status: false, error_message: "Неверные параметры запроса" });
+  }
 
-    const user = await User.findOne(
-      { _id: req.body.userId },
-      "id name email age token"
-    ).exec();
+  if (!checkTokenId({ id: parseInt(tokenId) })) {
+    res
+      .status(400)
+      .json({ status: false, error_message: "Неверные параметры запроса" });
+  }
 
-    if (user) {
-      if (user.token.length > 0) {
-        if (user.token[req.body.tokenId]) {
-          let tokenArr = user.token;
-          tokenArr.splice(req.body.tokenId, 1);
+  // const deletedToken = await models.Token.destroy({
+  //   where: { id: req.body.tokenId },
+  // });
 
-          const updatedUser = await User.findOneAndUpdate(
-            { _id: req.body.userId },
-            {
-              token: tokenArr,
-            },
-            { new: true }
-          );
-          if (updatedUser) {
-            res.status(200).json({ status: true, userData: updatedUser });
-          } else {
-            res.status(400).json({
-              status: true,
-              error_message: "Не удалось удалить токен",
-            });
-          }
+  // const updatedUser = await models.User.findOne({
+  //   include: [
+  //     {
+  //       model: models.Token,
+  //       as: "token",
+  //     },
+  //   ],
+  //   where: { id: req.body.userId },
+  // });
+
+  const user = await User.findOne(
+    { _id: userId },
+    "id name email age token"
+  ).exec();
+
+  if (user) {
+    if (user.token.length > 0) {
+      if (user.token[tokenId]) {
+        let tokenArr = user.token;
+        tokenArr.splice(tokenId, 1);
+
+        const updatedUser = await User.findOneAndUpdate(
+          { _id: userId },
+          {
+            token: tokenArr,
+          },
+          { new: true }
+        );
+        if (updatedUser) {
+          res.status(200).json({ status: true, userData: updatedUser });
+        } else {
+          res.status(400).json({
+            status: true,
+            error_message: "Не удалось удалить токен",
+          });
         }
-      } else {
-        res.status(404).json({
-          status: false,
-          error_message:
-            "Не удалось найти ни одного токена. Перезагрузите страницу",
-        });
       }
     } else {
       res.status(404).json({
         status: false,
-        error_message: "Не удалось найти пользователя",
+        error_message:
+          "Не удалось найти ни одного токена. Перезагрузите страницу",
       });
     }
   } else {
-    res.status(400).json({
+    res.status(404).json({
       status: false,
-      error_message: "Ошибка. Не достаточно параметров",
+      error_message: "Не удалось найти пользователя",
     });
   }
 
@@ -487,24 +584,24 @@ exports.deleteToken = async function (req, res) {
 exports.deleteById = async function (req, res) {
   // check if user is admin
   if (req.session.user.is_admin) {
-    if (req.body.userId) {
-      // const deletedUser = await models.User.destroy({
-      //   where: {
-      //     id: req.body.userId,
-      //   },
-      // });
-      const result = await User.remove({ _id: req.body.userId }).exec();
-      if (result) {
-        res.status(200).json({ status: true });
-      } else {
-        res
-          .status(400)
-          .json({ status: false, error_message: "Не удалось удалить токен" });
-      }
+    if (!checkUserId({ id: req.body.userId })) {
+      res
+        .status(400)
+        .json({ status: false, error_message: "Неверные параметры запроса" });
+    }
+
+    // const deletedUser = await models.User.destroy({
+    //   where: {
+    //     id: req.body.userId,
+    //   },
+    // });
+    const result = await User.remove({ _id: req.body.userId }).exec();
+    if (result) {
+      res.status(200).json({ status: true });
     } else {
       res
         .status(400)
-        .json({ status: false, error_message: "Не указан id пользователя" });
+        .json({ status: false, error_message: "Не удалось удалить токен" });
     }
   } else {
     res.status(400).json({

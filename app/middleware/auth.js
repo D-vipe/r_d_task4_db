@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models.mongo/user.model");
 
 const config = process.env;
 

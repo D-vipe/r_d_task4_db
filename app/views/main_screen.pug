@@ -28,8 +28,6 @@ html(lang="ru")
                         ul.nav.navbar-nav
                             li(class=(title == 'Home') ? 'active' : null)
                                 a(href='/') Главная
-                            li(class=(title == 'About') ? 'active' : null)
-                                a(href='/users') Пользователи
                         ul.nav.navbar-nav.navbar-right
                             if user
                                 li.dropdown
@@ -42,9 +40,6 @@ html(lang="ru")
                                         li.divider(role='separator')
                                         li
                                             a(href='/logout') Logout
-                            else
-                                li(class=(title == 'Auth') ? 'active' : null)
-                                    a(href='/login') Авторизация
 
             .container
                 section.d-flex.align-items-center

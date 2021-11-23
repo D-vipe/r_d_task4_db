@@ -39,6 +39,7 @@ const userRouter = express.Router();
  *                   type: integer
  *                   description: authenticated user id
  *                   example: 4
+
  *       404:
  *        description: user was not found
  *        content:
@@ -92,6 +93,9 @@ const userRouter = express.Router();
   *               userPass:
   *                 type: string
   *                 example: sup3rpass
+  *               token:
+  *                 type: string
+  *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5OTRiMTg4MmE0MzMzOGI4M2U4ZGFiIiwiaWF0IjoxNjM3NjkzMTk0LCJleHAiOjE2Mzc3Nzk1OTR9.7IfXDQKha77YH4lh9n0wIkAkkwPXPr3ScLIdHKj7vW8
   *     responses:
   *       200:
   *         description: Successful request answer
@@ -142,6 +146,22 @@ const userRouter = express.Router();
   *                           updatedAt:
   *                             type: datetime
   *                             example: 2021-11-15 02:23:31
+  *       403:
+  *         description: Authentication error
+  *         content:
+  *           application/json:
+  *             schema:
+  *               type: object
+  *               properties:
+  *                status:
+  *                  type: boolean
+  *                  description: status of the response
+  *                  example: false
+  *                error_message:
+  *                  type: string
+  *                  description: message explaining what went wrong
+  *                  example: Ошибка авторизации
+  *
   *       404:
   *        description: User was not found
   *        content:
@@ -200,6 +220,9 @@ const userRouter = express.Router();
  *               userPass:
  *                 type: string
  *                 example: sup3rpass
+ *               token:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5OTRiMTg4MmE0MzMzOGI4M2U4ZGFiIiwiaWF0IjoxNjM3NjkzMTk0LCJleHAiOjE2Mzc3Nzk1OTR9.7IfXDQKha77YH4lh9n0wIkAkkwPXPr3ScLIdHKj7vW8
  *     responses:
  *       200:
  *         description: json answer
@@ -236,6 +259,22 @@ const userRouter = express.Router();
  *                       type: string
  *                       description: user age
  *                       example: 34
+ *       403:
+ *         description: Authentication error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                status:
+ *                  type: boolean
+ *                  description: status of the response
+ *                  example: false
+ *                error_message:
+ *                  type: string
+ *                  description: message explaining what went wrong
+ *                  example: Ошибка авторизации
+ *
  *       400:
  *         description: wrong requestbody params
  *         content:
@@ -279,6 +318,9 @@ userRouter.put("/create", [jsonParser, checkPost], userController.addUser);
  *               userPass:
  *                 type: string
  *                 example: sup3rpass
+ *               token:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5OTRiMTg4MmE0MzMzOGI4M2U4ZGFiIiwiaWF0IjoxNjM3NjkzMTk0LCJleHAiOjE2Mzc3Nzk1OTR9.7IfXDQKha77YH4lh9n0wIkAkkwPXPr3ScLIdHKj7vW8
  *     responses:
  *       200:
  *         description: Successful request answer
@@ -309,6 +351,22 @@ userRouter.put("/create", [jsonParser, checkPost], userController.addUser);
  *                     password:
  *                       type: string
  *                       example: df9aba65b8a732d72481e9fe85db2aee
+ *       403:
+ *         description: Authentication error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                status:
+ *                  type: boolean
+ *                  description: status of the response
+ *                  example: false
+ *                error_message:
+ *                  type: string
+ *                  description: message explaining what went wrong
+ *                  example: Ошибка авторизации
+ *
  *       400:
  *         description: Wrong requestbody params or other mistakes
  *         content:
@@ -343,6 +401,9 @@ userRouter.patch("/update", [jsonParser, checkPost], userController.update);
  *               userId:
  *                 type: integer
  *                 example: 15
+ *               token:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5OTRiMTg4MmE0MzMzOGI4M2U4ZGFiIiwiaWF0IjoxNjM3NjkzMTk0LCJleHAiOjE2Mzc3Nzk1OTR9.7IfXDQKha77YH4lh9n0wIkAkkwPXPr3ScLIdHKj7vW8
  *     responses:
  *       200:
  *         description: Successful request answer
@@ -393,6 +454,23 @@ userRouter.patch("/update", [jsonParser, checkPost], userController.update);
  *                           updatedAt:
  *                             type: datetime
  *                             example: 2021-11-15 02:23:31
+ *
+ *       403:
+ *         description: Authentication error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                status:
+ *                  type: boolean
+ *                  description: status of the response
+ *                  example: false
+ *                error_message:
+ *                  type: string
+ *                  description: message explaining what went wrong
+ *                  example: Ошибка авторизации
+ *
  *       404:
  *        description: User was not found
  *        content:
@@ -446,6 +524,9 @@ userRouter.put("/generateToken", [jsonParser, checkPost], userController.generat
  *               tokenId:
  *                 type: integer
  *                 example: 25
+ *               token:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5OTRiMTg4MmE0MzMzOGI4M2U4ZGFiIiwiaWF0IjoxNjM3NjkzMTk0LCJleHAiOjE2Mzc3Nzk1OTR9.7IfXDQKha77YH4lh9n0wIkAkkwPXPr3ScLIdHKj7vW8
  *     responses:
  *       200:
  *         description: Successful request answer
@@ -496,6 +577,22 @@ userRouter.put("/generateToken", [jsonParser, checkPost], userController.generat
  *                           updatedAt:
  *                             type: datetime
  *                             example: 2021-11-15 02:23:31
+ *       403:
+ *         description: Authentication error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                status:
+ *                  type: boolean
+ *                  description: status of the response
+ *                  example: false
+ *                error_message:
+ *                  type: string
+ *                  description: message explaining what went wrong
+ *                  example: Ошибка авторизации
+ *
  *       404:
  *        description: User was not found
  *        content:
@@ -548,6 +645,9 @@ userRouter.patch("/resetToken", [jsonParser, checkPost], userController.resetTok
  *               tokenId:
  *                 type: integer
  *                 example: 25
+ *               token:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5OTRiMTg4MmE0MzMzOGI4M2U4ZGFiIiwiaWF0IjoxNjM3NjkzMTk0LCJleHAiOjE2Mzc3Nzk1OTR9.7IfXDQKha77YH4lh9n0wIkAkkwPXPr3ScLIdHKj7vW8
  *     responses:
  *       200:
  *         description: Successful request answer
@@ -598,6 +698,21 @@ userRouter.patch("/resetToken", [jsonParser, checkPost], userController.resetTok
  *                           updatedAt:
  *                             type: datetime
  *                             example: 2021-11-15 02:23:31
+ *       403:
+ *         description: Authentication error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                status:
+ *                  type: boolean
+ *                  description: status of the response
+ *                  example: false
+ *                error_message:
+ *                  type: string
+ *                  description: message explaining what went wrong
+ *                  example: Ошибка авторизации
  *       404:
  *        description: User was not found
  *        content:
@@ -647,6 +762,9 @@ userRouter.delete("/deleteToken", [jsonParser, checkPost], userController.delete
  *               userId:
  *                 type: integer
  *                 example: 15
+ *               token:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjE5OTRiMTg4MmE0MzMzOGI4M2U4ZGFiIiwiaWF0IjoxNjM3NjkzMTk0LCJleHAiOjE2Mzc3Nzk1OTR9.7IfXDQKha77YH4lh9n0wIkAkkwPXPr3ScLIdHKj7vW8
  *     responses:
  *       200:
  *         description: Successful request answer
@@ -659,6 +777,22 @@ userRouter.delete("/deleteToken", [jsonParser, checkPost], userController.delete
  *                   type: boolean
  *                   description: status of the operation
  *                   example: true
+ *       403:
+ *         description: Authentication error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                status:
+ *                  type: boolean
+ *                  description: status of the response
+ *                  example: false
+ *                error_message:
+ *                  type: string
+ *                  description: message explaining what went wrong
+ *                  example: Ошибка авторизации
+ *
  *       404:
  *        description: User was not found
  *        content:
